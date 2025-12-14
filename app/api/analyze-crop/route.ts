@@ -11,13 +11,24 @@ export async function POST(req: Request) {
     }
 
     if (!process.env.MISTRAL_API_KEY) {
-        return NextResponse.json({ error: "MISTRAL_API_KEY not configured" }, { status: 500 });
+        console.error("MISTRAL_API_KEY is missing");
+        return NextResponse.json(
+            { error: "Configuration Error: MISTRAL_API_KEY is missing in environment variables. Please add it to your Vercel Project Settings." },
+            { status: 500 }
+        );
     }
-
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const base64Image = buffer.toString("base64");
     const dataUrl = `data:${file.type};base64,${base64Image}`;
+
+    if (!process.env.MISTRAL_API_KEY) {
+        console.error("MISTRAL_API_KEY is missing");
+        return NextResponse.json(
+            { error: "Configuration Error: MISTRAL_API_KEY is missing in environment variables. Please add it to your Vercel Project Settings." },
+            { status: 500 }
+        );
+    }
 
     const client = new Mistral({
       apiKey: process.env.MISTRAL_API_KEY,

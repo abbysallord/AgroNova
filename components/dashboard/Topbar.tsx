@@ -3,6 +3,7 @@ import React from 'react';
 import { IconWorld } from '@tabler/icons-react';
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import Link from 'next/link';
 
 export const Topbar = () => {
   const { user } = useAuth();
@@ -18,12 +19,8 @@ export const Topbar = () => {
             <h1 className="text-xl font-bold text-neutral-800 dark:text-white">Dashboard</h1>
         </div>
         <div className="flex items-center gap-4">
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 cursor-pointer">
-                <IconWorld size={18} className="text-neutral-600 dark:text-neutral-400"/>
-                <span className="text-sm font-medium text-neutral-600 dark:text-neutral-300">English</span>
-             </div>
              <ThemeToggle />
-             <div className="flex items-center gap-2">
+             <Link href="/dashboard/profile" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                 <div className="size-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-700 dark:text-green-300 font-bold border border-green-200 dark:border-green-800 overflow-hidden relative">
                     {user?.avatar ? (
                         <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
@@ -35,7 +32,7 @@ export const Topbar = () => {
                     <p className="text-sm font-medium text-neutral-800 dark:text-white">{user?.name || "Guest Farmer"}</p>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400">{user?.role || "Visitor"}</p>
                 </div>
-             </div>
+             </Link>
         </div>
     </div>
   );
