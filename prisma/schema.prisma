@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String   // Added password field for auth
+  role      String   @default("Farmer") // Farmer, User, Admin
+  status    String   @default("CLEAR") // CLEAR, YELLOW, RED, BLACK
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  strikes   Strike[]
+  posts     Post[]
+  comments  Comment[]
+  orders    Order[]  @relation("BuyerOrders")
+  sales     Order[]  @relation("SellerOrders")
+  
+  // JSON fields for simple arrays
+  followers String? // JSON string
+  following String? // JSON string
+
+  products  Product[] // Relation to products sold by farmer
+}
+
+model Strike {
+  id        String   @id @default(uuid())
+  reason    String
+  orderId   String?
+  active    Boolean  @default(true)
+  date      DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  content   String
+  image     String?
+  date      DateTime  @default(now())
+  
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+
+  comments  Comment[]
+  
+  // JSON for simple likes array
+  likes     String?   // JSON string of user emails/ids
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  date      DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  amount          Float
+  status          String   @default("PENDING_BUYER")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  buyerId         String
+  buyer           User     @relation("BuyerOrders", fields: [buyerId], references: [id])
+  
+  sellerVpa       String   // Keeping as string for now to match interface, or link to User if seller is user
+  sellerId        String?  // Optional link to User if seller exists in DB
+  seller          User?    @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  items           String   // JSON string
+  shippingAddress String
+  buyerUpiIndex   String?
+  tries           Int      @default(0)
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  timestamp DateTime @default(now())
+  read      Boolean  @default(false)
+  
+  senderId    String
+  receiverId  String
+  
+  // For simplicity avoiding relations for now since Message uses email in current implementation
+  // But ideally should link to User. Sticking to current schema structure:
+  senderEmail   String
+  receiverEmail String
+  
+  replyToId String?
+  edited    Boolean @default(false)
+  reactions String? // JSON string
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float
+  unit        String   @default("kg") 
+  image       String?
+  category    String?
+  sellerVpa   String?
+  available   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  farmerId    String
+  farmer      User     @relation(fields: [farmerId], references: [id])
+}

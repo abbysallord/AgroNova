@@ -31,6 +31,7 @@ export const metadata = {
 
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ChatWidget } from "@/components/landing/ChatWidget";
 
 import { Toaster } from "sonner";
 
@@ -55,6 +56,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
           <Toaster />
+          <ChatWidget />
         </AuthProvider>
       </body>
     </html>

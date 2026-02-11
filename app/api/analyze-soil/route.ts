@@ -20,6 +20,8 @@ export async function POST(req: Request) {
 
         console.log(`[Soil Analysis] Request Type: ${type}`);
 
+        let inputMetrics: any = {};
+
         if (type === "manual") {
             const n = formData.get("n");
             const p = formData.get("p");
@@ -28,6 +30,8 @@ export async function POST(req: Request) {
             const moisture = formData.get("moisture");
             const location = formData.get("location");
             const color = formData.get("color");
+
+            inputMetrics = { n, p, k, ph_level: ph, moisture };
 
             prompt = `Analyze the following soil data for a farmer in ${location || "India"}:
         - Nitrogen (N): ${n}
@@ -73,6 +77,13 @@ export async function POST(req: Request) {
 
         const cleanText = (content as string).replace(/```json/g, '').replace(/```/g, '').trim();
         const jsonResponse = JSON.parse(cleanText);
+
+        // Inject the input metrics back into the response so the frontend can display them
+        jsonResponse.ph_level = inputMetrics.ph_level;
+        jsonResponse.n = inputMetrics.n;
+        jsonResponse.p = inputMetrics.p;
+        jsonResponse.k = inputMetrics.k;
+        jsonResponse.moisture = inputMetrics.moisture;
 
         return NextResponse.json(jsonResponse);
 

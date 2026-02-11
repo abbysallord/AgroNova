@@ -3,8 +3,8 @@ import { dbUsers } from "@/lib/db";
 
 export async function GET() {
     try {
-        let users = dbUsers.getAll();
-        
+        let users = await dbUsers.getAll();
+
         // Mock Users for interactions
         const mockUsers = [
             { name: "Ramesh Kumar", email: "ramesh@farm.com", role: "Expert Farmer", status: "CLEAR", followers: ["alice@example.com"], following: [] },
@@ -15,22 +15,22 @@ export async function GET() {
 
         // Ensure mocks exist in DB so they can be followed
         for (const mock of mockUsers) {
-            dbUsers.ensure(mock);
+            await dbUsers.ensure(mock);
         }
-        
+
         // Re-read to get latest with IDs/Strikes etc if relevant
-        users = dbUsers.getAll();
+        users = await dbUsers.getAll();
 
         // Combine real + mock (deduplicate by email if needed, but mock emails are fake)
         // Since we ensured them, they ARE in `users` now! 
         // So we just return `users`.
         // But `users` might contain non-mock users too. That's fine.
-        
+
         // Return only public info
         const safeUsers = users.map((u: any) => ({
-            name: u.name || u.email.split('@')[0], 
+            name: u.name || u.email.split('@')[0],
             email: u.email,
-            role: u.role || "Farmer", 
+            role: u.role || "Farmer",
             status: u.status,
             followers: u.followers || [],
             following: u.following || []

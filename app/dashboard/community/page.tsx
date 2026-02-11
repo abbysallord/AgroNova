@@ -126,13 +126,27 @@ export default function CommunityPage() {
 
     const handleLike = async (postId: string) => {
         if (!user) return;
+
+        // Optimistic Update
+        const previousPosts = [...posts];
         setPosts(prev => prev.map(p => p.id === postId ? {
             ...p, likes: p.likes.includes(user.email) ? p.likes.filter(e => e !== user.email) : [...p.likes, user.email]
         } : p));
-        await fetch("/api/community/posts/like", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ postId, userEmail: user.email })
-        });
+
+        try {
+            const res = await fetch("/api/community/posts/like", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ postId, userEmail: user.email })
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to like post");
+            }
+        } catch (error) {
+            console.error("Like failed, reverting:", error);
+            setPosts(previousPosts); // Revert on error
+            alert("Failed to save like. Please try again.");
+        }
     };
 
     const handleDeletePost = async (postId: string) => {
@@ -479,6 +493,17 @@ function PostCard({ post, user, onLike, onDelete, onComment, onDeleteComment, on
     const [editContent, setEditContentState] = useState(post.content);
     const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
     const [editCommentText, setEditCommentText] = useState("");
+    const [isLiking, setIsLiking] = useState(false); // Local loading state
+
+    const handleLikeClick = async () => {
+        if (isLiking) return;
+        setIsLiking(true);
+        try {
+            await onLike();
+        } finally {
+            setIsLiking(false);
+        }
+    };
 
     return (
         <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -519,7 +544,7 @@ function PostCard({ post, user, onLike, onDelete, onComment, onDeleteComment, on
                 {post.image && <div className="mb-4 rounded-lg overflow-hidden border border-gray-100 dark:border-neutral-800 relative h-64 w-full"><Image src={post.image} alt="Post" fill className="object-cover" /></div>}
 
                 <div className="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-neutral-800">
-                    <button onClick={onLike} className={`flex items-center gap-2 text-sm font-medium transition-colors ${post.likes.includes(user?.email || "") ? "text-pink-500" : "text-gray-500 hover:text-pink-500"}`}>
+                    <button onClick={handleLikeClick} disabled={isLiking} className={`flex items-center gap-2 text-sm font-medium transition-colors ${post.likes.includes(user?.email || "") ? "text-pink-500" : "text-gray-500 hover:text-pink-500"} ${isLiking ? "opacity-50 cursor-not-allowed" : ""}`}>
                         <IconHeart size={18} className={post.likes.includes(user?.email || "") ? "fill-current" : ""} /> <span>{post.likes.length}</span>
                     </button>
                     <button onClick={() => setShowComments(!showComments)} className={`flex items-center gap-2 text-sm font-medium transition-colors ${showComments ? "text-green-600" : "text-gray-500 hover:text-gray-900 dark:hover:text-white"}`}>

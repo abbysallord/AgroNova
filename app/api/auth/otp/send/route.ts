@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateOtp, createOtpHash } from "@/lib/otp";
 import { sendVerificationEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,11 @@ export async function POST(req: Request) {
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found. Please sign up first." }, { status: 404 });
     }
 
     const code = generateOtp();

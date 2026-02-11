@@ -92,7 +92,18 @@ export default function PestDetectionPage() {
       }
 
       setResult(data);
-      toast.success("Analysis complete!");
+
+      if (data.error) {
+        setError(data.error);
+        setResult(null);
+        if (data.error === "Not a crop image") {
+          toast.error("Please upload a valid crop or plant image.");
+        } else {
+          toast.error(data.error);
+        }
+      } else {
+        toast.success("Analysis complete!");
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -116,7 +127,7 @@ export default function PestDetectionPage() {
       </div>
 
       <div className="w-full border-2 border-dashed bg-white/50 backdrop-blur-sm dark:bg-neutral-900/50 border-neutral-300 dark:border-neutral-700 rounded-3xl max-w-4xl mx-auto shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
-        <FileUpload onChange={handleFileUpload} />
+        <FileUpload onChange={handleFileUpload} maxFiles={1} accept={{ 'image/*': [] }} />
       </div>
 
       <div className="flex justify-center my-8">

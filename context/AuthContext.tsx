@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: "Farmer" | "User") => Promise<boolean>;
   sendOtp: (email: string) => Promise<string>;
   verifyOtp: (email: string, code: string) => Promise<boolean>;
   logout: () => void;
@@ -45,13 +45,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const demoEmail = "demo@agronova.com";
     const demoKey = `reg_${demoEmail}`;
     if (!localStorage.getItem(demoKey)) {
-        console.log("Seeding Demo User...");
-        localStorage.setItem(demoKey, JSON.stringify({
-            name: "Investor Demo",
-            password: "password123",
-            location: "Bangalore, KA",
-            role: "Farmer"
-        }));
+      console.log("Seeding Demo User...");
+      localStorage.setItem(demoKey, JSON.stringify({
+        name: "Investor Demo",
+        password: "password123",
+        location: "Bangalore, KA",
+        role: "Farmer"
+      }));
     }
   }, []);
 
@@ -61,165 +61,136 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateProfile = (updates: Partial<User>) => {
-      if (!user) return;
-      
-      const updatedUser = { ...user, ...updates };
-      persistUser(updatedUser);
-      
-      // Update persistent record (so it survives logout/login)
-      const cleanEmail = normalize(user.email);
-      // Don't update reg for admin special case unless we want to, 
-      // but for 'dshenoyh' we used hardcoded check originally.
-      // We will now try to save to reg for everyone to ensure persistence.
-      
-      const regKey = `reg_${cleanEmail}`;
-      const storedReg = localStorage.getItem(regKey);
-      
-      if (storedReg) {
-          const currentReg = JSON.parse(storedReg);
-          // Preserve password, overwrite other fields
-          const newReg = { ...currentReg, ...updates };
-          // Remove fields that shouldn't be in reg if any (none really)
-          localStorage.setItem(regKey, JSON.stringify(newReg));
-      } else {
-          // If no reg exists (e.g. hardcoded admin), maybe create one?
-          // For now, only persist to session is guaranteed if no reg exists.
-      }
+    if (!user) return;
+
+    const updatedUser = { ...user, ...updates };
+    persistUser(updatedUser);
+
+    // Update persistent record (so it survives logout/login)
+    const cleanEmail = normalize(user.email);
+    // Don't update reg for admin special case unless we want to, 
+    // but for 'dshenoyh' we used hardcoded check originally.
+    // We will now try to save to reg for everyone to ensure persistence.
+
+    const regKey = `reg_${cleanEmail}`;
+    const storedReg = localStorage.getItem(regKey);
+
+    if (storedReg) {
+      const currentReg = JSON.parse(storedReg);
+      // Preserve password, overwrite other fields
+      const newReg = { ...currentReg, ...updates };
+      // Remove fields that shouldn't be in reg if any (none really)
+      localStorage.setItem(regKey, JSON.stringify(newReg));
+    } else {
+      // If no reg exists (e.g. hardcoded admin), maybe create one?
+      // For now, only persist to session is guaranteed if no reg exists.
+    }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const cleanEmail = normalize(email);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalize(email), password }),
+      });
 
-    // 1. Admin Credential Check
-    if (cleanEmail === "dshenoyh@gmail.com") {
-        const storedReg = localStorage.getItem(`reg_${cleanEmail}`);
-        if (storedReg) {
-             const storedData = JSON.parse(storedReg);
-             if (password === storedData.password) {
-                 const { password: _, ...profileData } = storedData;
-                 persistUser({ ...profileData, email: cleanEmail, role: "Admin" });
-                 return true;
-             }
-        } else if (password === "admin@123") {
-             persistUser({ name: "Dhanush Shenoy", email: cleanEmail, role: "Admin" });
-             return true;
-        }
-        return false;
-    }
-
-    // 2. Regular / Demo User Check
-    const storedReg = localStorage.getItem(`reg_${cleanEmail}`);
-    if (storedReg) {
-      const storedData = JSON.parse(storedReg);
-      if (password === storedData.password) {
-        const { password: _, ...profileData } = storedData;
-        persistUser({ ...profileData, email: cleanEmail, role: "Farmer" });
-        return true;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Login failed");
       }
+
+      const user = await res.json();
+      persistUser(user);
+      return true;
+    } catch (error) {
+      console.error("Login Error:", error);
+      return false;
     }
-    
-    return false;
   };
 
-  const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const cleanEmail = normalize(email);
+  const register = async (name: string, email: string, password: string, role: "Farmer" | "User"): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email: normalize(email), password, role }),
+      });
 
-    // Check if loading user already exists (optional but good practice)
-    if (localStorage.getItem(`reg_${cleanEmail}`)) {
-        // allow overwrite for demo
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Registration failed");
+      }
+
+      const user = await res.json();
+      persistUser(user);
+      return true;
+    } catch (error) {
+      console.error("Registration Error:", error);
+      return false;
     }
-
-    // Initialize with basic data
-    localStorage.setItem(`reg_${cleanEmail}`, JSON.stringify({ name, password }));
-    
-    const role = cleanEmail === "dshenoyh@gmail.com" ? "Admin" : "Farmer";
-    persistUser({ name, email: cleanEmail, role });
-    return true;
   };
 
   const sendOtp = async (email: string): Promise<string> => {
     const cleanEmail = normalize(email);
-    
-    // Check if user exists (mock check for now, ideally check DB)
-    const storedReg = localStorage.getItem(`reg_${cleanEmail}`);
-    const isAdmin = cleanEmail === "dshenoyh@gmail.com";
-    const isDemo = cleanEmail === "demo@agronova.com";
 
-    if (!storedReg && !isAdmin && !isDemo) {
-        throw new Error("User not found. Please sign up first.");
-    }
+    // Removed client-side check. Letting server handle "User not found".
 
     try {
-        const res = await fetch("/api/auth/otp/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: cleanEmail }),
-        });
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
 
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Failed to send OTP");
-        }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to send OTP");
+      }
 
-        const { hash, expiry } = await res.json();
-        
-        // Store Hash + Expiry in LocalStorage for verification step
-        localStorage.setItem(`otp_hash_${cleanEmail}`, JSON.stringify({ hash, expiry }));
-        
-        return "Code sent to email!"; // Return message instead of code
+      const { hash, expiry } = await res.json();
+
+      // Store Hash + Expiry in LocalStorage for verification step
+      localStorage.setItem(`otp_hash_${cleanEmail}`, JSON.stringify({ hash, expiry }));
+
+      return "Code sent to email!"; // Return message instead of code
     } catch (error: any) {
-        throw new Error(error.message);
+      throw new Error(error.message);
     }
   };
 
   const verifyOtp = async (email: string, code: string): Promise<boolean> => {
-     const cleanEmail = normalize(email);
+    const cleanEmail = normalize(email);
 
-     const storedHashData = localStorage.getItem(`otp_hash_${cleanEmail}`);
-     
-     if (!storedHashData) {
-        throw new Error("OTP session expired. Please request a new code.");
-     }
+    const storedHashData = localStorage.getItem(`otp_hash_${cleanEmail}`);
 
-     const { hash, expiry } = JSON.parse(storedHashData);
+    if (!storedHashData) {
+      throw new Error("OTP session expired. Please request a new code.");
+    }
 
-     try {
-        const res = await fetch("/api/auth/otp/verify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: cleanEmail, otp: code, hash, expiry }),
-        });
+    const { hash, expiry } = JSON.parse(storedHashData);
 
-        if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(errorData.error || "Invalid OTP");
-        }
-        
-        // Verification Success -> Log user in
-        const storedReg = localStorage.getItem(`reg_${cleanEmail}`);
-        let role: "Admin" | "Farmer" = "Farmer";
-        let profileData: Partial<User> = { name: "Farmer" };
+    try {
+      const res = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, otp: code, hash, expiry }),
+      });
 
-        if (cleanEmail === "dshenoyh@gmail.com") {
-            role = "Admin";
-            profileData = { name: "Dhanush Shenoy" };
-        } 
-        
-        if (storedReg) {
-            const storedData = JSON.parse(storedReg);
-            const { password: _, ...rest } = storedData;
-            profileData = rest;
-        }
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Invalid OTP");
+      }
 
-        persistUser({ ...profileData as User, email: cleanEmail, role });
-        localStorage.removeItem(`otp_hash_${cleanEmail}`); // Clear OTP hash after success
-        return true;
+      // Verification Success -> Log user in
+      const user = await res.json();
+      persistUser(user);
+      localStorage.removeItem(`otp_hash_${cleanEmail}`); // Clear OTP hash after success
+      return true;
 
-     } catch (error: any) {
-         throw new Error(error.message);
-     }
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
   };
 
   const logout = () => {

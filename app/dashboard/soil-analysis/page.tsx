@@ -226,14 +226,14 @@ const AnalysisResult = ({ result, onReset }: { result: any, onReset: () => void 
                             Primary Classification
                         </div>
                         <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-neutral-400 mb-6 max-w-2xl">
-                            {result.soil_type}
+                            {renderContent(result.soil_type)}
                         </h2>
                     </div>
 
                     <div className="relative z-10 glass-panel bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl max-w-xl">
-                        <p className="text-neutral-200 text-base leading-relaxed">
-                            {result.description}
-                        </p>
+                        <div className="text-neutral-200 text-base leading-relaxed">
+                            {renderContent(result.description)}
+                        </div>
                     </div>
                 </div>
 

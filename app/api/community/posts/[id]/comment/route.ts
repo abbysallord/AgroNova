@@ -10,11 +10,11 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
 
         if (!text || !userEmail) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-        const newComment = dbPosts.addComment(id, { userEmail, userName, text });
+        const newComment = await dbPosts.addComment(id, { userEmail, userName, text });
 
         if (!newComment) {
-             const posts = dbPosts.getAll();
-             return NextResponse.json({ error: `Comment: Post Not Found. ID: ${id}, Count: ${posts.length}` }, { status: 404 });
+            const posts = await dbPosts.getAll();
+            return NextResponse.json({ error: `Comment: Post Not Found. ID: ${id}, Count: ${posts.length}` }, { status: 404 });
         }
 
         return NextResponse.json(newComment);
@@ -33,8 +33,8 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
 
         if (!commentId || !userEmail) return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
-        const updatedPost = dbPosts.deleteComment(id, commentId, userEmail);
-        
+        const updatedPost = await dbPosts.deleteComment(id, commentId, userEmail);
+
         if (!updatedPost) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
 
         return NextResponse.json({ success: true, post: updatedPost });

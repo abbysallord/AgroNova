@@ -5,7 +5,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
     try {
         const params = await props.params;
         const { id } = params;
-        
+
         // Prefer Query Param for reliability in DELETE
         const { searchParams } = new URL(req.url);
         let userEmail = searchParams.get('userEmail');
@@ -21,20 +21,20 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
         if (!userEmail) return NextResponse.json({ error: "Missing userEmail" }, { status: 400 });
 
         // Debugging handled in previous steps, keeping it simple but correct now
-        const success = dbPosts.delete(id, userEmail);
+        const success = await dbPosts.delete(id, userEmail);
         if (!success) {
             // Keep debug info if possible
-             const posts = dbPosts.getAll(); 
-             const post = posts.find(p => p.id === id);
-             if (!post) {
+            const posts = await dbPosts.getAll();
+            const post = posts.find(p => p.id === id);
+            if (!post) {
                 return NextResponse.json({ error: `Not Found. ID: ${id}, Total Posts: ${posts.length}` }, { status: 403 });
-             }
-             const safeEmail = userEmail.toLowerCase().trim();
-             const owner = post.userEmail.toLowerCase().trim();
-             if (owner !== safeEmail) {
+            }
+            const safeEmail = userEmail.toLowerCase().trim();
+            const owner = post.userEmail.toLowerCase().trim();
+            if (owner !== safeEmail) {
                 return NextResponse.json({ error: `Unauthorized. Owner: ${owner}, You: ${safeEmail}` }, { status: 403 });
-             }
-             return NextResponse.json({ error: "Delete Failed in DB Helper" }, { status: 403 });
+            }
+            return NextResponse.json({ error: "Delete Failed in DB Helper" }, { status: 403 });
         }
 
         return NextResponse.json({ success: true });
@@ -50,12 +50,12 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
         const body = await req.json();
         const { userEmail, content } = body;
 
-        const updated = dbPosts.edit(id, userEmail, content);
+        const updated = await dbPosts.edit(id, userEmail, content);
         if (!updated) {
-             const posts = dbPosts.getAll();
-             const post = posts.find(p => p.id === id);
-             if (!post) return NextResponse.json({ error: `Edit: Post Not Found (${id})` }, { status: 403 });
-             return NextResponse.json({ error: `Edit Unauthorized. Owner: ${post.userEmail}, You: ${userEmail}` }, { status: 403 });
+            const posts = await dbPosts.getAll();
+            const post = posts.find(p => p.id === id);
+            if (!post) return NextResponse.json({ error: `Edit: Post Not Found (${id})` }, { status: 403 });
+            return NextResponse.json({ error: `Edit Unauthorized. Owner: ${post.userEmail}, You: ${userEmail}` }, { status: 403 });
         }
 
         return NextResponse.json(updated);

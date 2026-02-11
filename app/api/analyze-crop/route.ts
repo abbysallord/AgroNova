@@ -21,26 +21,30 @@ export async function POST(req: Request) {
     const base64Image = buffer.toString("base64");
     const dataUrl = `data:${file.type};base64,${base64Image}`;
 
-    const prompt = `Analyze this crop image for pests or diseases. 
-    Return ONLY a valid JSON object with the following structure (do NOT include markdown formatting like \`\`\`json):
-    {
-      "disease": "Name of disease or 'Healthy'",
-      "crop": "Name of crop",
-      "confidence": "e.g. 95%",
-      "severity": "Low | Moderate | High | Critical | None",
-      "symptoms": ["Symptom 1", "Symptom 2"],
-      "cure": {
-        "chemical": ["Step 1", "Step 2", "Step 3"],
-        "organic": ["Step 1", "Step 2", "Step 3"]
-      },
-      "prevention": ["Tip 1", "Tip 2", "Tip 3"],
-      "type": "disease | healthy"
-    }
-    If the image is not a plant/crop, return {"error": "Not a crop image"}.
-    IMPORTANT: Provide concise short sentences. Return strict JSON arrays for lists.
-    }
-    If the image is not a plant/crop, return {"error": "Not a crop image"}.
-    IMPORTANT: Write for a farmer. Use simple, clear, and encouraging language. Keep text SHORT and easy to read. Avoid large blocks of text.`;
+    const prompt = `Analyze this image. First, determine if it shows a plant, crop, leaf, or agriculture-related subject. 
+    
+    1. IF IT IS NOT A PLANT/CROP (e.g., a person, car, building, animal, random object):
+       Return exactly this JSON: {"error": "Not a crop image"}
+
+    2. IF IT IS A PLANT/CROP:
+       Analyze for pests or diseases. Return ONLY a valid JSON object with this structure:
+       {
+         "disease": "Name of disease or 'Healthy'",
+         "crop": "Name of crop detected",
+         "confidence": "e.g. 95%",
+         "severity": "Low | Moderate | High | Critical | None",
+         "symptoms": ["Symptom 1", "Symptom 2"],
+         "cure": {
+           "chemical": ["Step 1", "Step 2"],
+           "organic": ["Step 1", "Step 2"]
+         },
+         "prevention": ["Tip 1", "Tip 2"],
+         "type": "disease | healthy"
+       }
+
+    IMPORTANT: 
+    - Output strictly valid JSON. No markdown code blocks. 
+    - Keep sentences short, simple, and encouraging for a farmer.`;
 
     const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
       method: "POST",

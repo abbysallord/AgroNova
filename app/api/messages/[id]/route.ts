@@ -10,7 +10,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
 
         if (!userEmail) return NextResponse.json({ error: "Missing user" }, { status: 400 });
 
-        const success = dbSocial.deleteMessage(id, userEmail);
+        const success = await dbSocial.deleteMessage(id, userEmail);
         if (!success) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
 
         return NextResponse.json({ success: true });
@@ -28,9 +28,9 @@ export async function PATCH(req: Request, props: { params: Promise<{ id: string 
 
         let result;
         if (reaction) {
-            result = dbSocial.reactMessage(id, userEmail, reaction);
+            result = await dbSocial.reactMessage(id, userEmail, reaction);
         } else if (content) {
-            result = dbSocial.editMessage(id, userEmail, content);
+            result = await dbSocial.editMessage(id, userEmail, content);
         } else {
             return NextResponse.json({ error: "No action specified" }, { status: 400 });
         }

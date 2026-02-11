@@ -7,10 +7,10 @@ export async function POST(req: Request) {
         const { userEmail, targetEmail } = body;
 
         // Auto-register users if they don't exist in DB (Critical Fix for "Follow not working")
-        dbUsers.ensure({ email: userEmail });
-        dbUsers.ensure({ email: targetEmail });
+        await dbUsers.ensure({ email: userEmail });
+        await dbUsers.ensure({ email: targetEmail });
 
-        const success = dbSocial.toggleFollow(userEmail, targetEmail);
+        const success = await dbSocial.toggleFollow(userEmail, targetEmail);
         if (!success) return NextResponse.json({ error: "Failed" }, { status: 400 });
 
         return NextResponse.json({ success: true });

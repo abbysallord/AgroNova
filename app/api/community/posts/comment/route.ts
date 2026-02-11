@@ -10,7 +10,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
-        const newComment = dbPosts.addComment(postId, { userEmail, userName, text }); // id date auto added
+        const newComment = await dbPosts.addComment(postId, { userEmail, userName, text }); // id date auto added
         if (!newComment) return NextResponse.json({ error: "Post not found" }, { status: 404 });
 
         return NextResponse.json(newComment);
@@ -30,7 +30,7 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
-        const result = dbPosts.deleteComment(postId, commentId, userEmail);
+        const result = await dbPosts.deleteComment(postId, commentId, userEmail);
         if (!result) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
 
         return NextResponse.json({ success: true });
@@ -48,7 +48,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
-        const result = dbPosts.editComment(postId, commentId, userEmail, text);
+        const result = await dbPosts.editComment(postId, commentId, userEmail, text);
         if (!result) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
 
         return NextResponse.json(result);

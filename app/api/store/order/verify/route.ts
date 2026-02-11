@@ -31,17 +31,17 @@ export async function POST(req: Request) {
         const body = await req.json();
         const { orderId, action } = body;
 
-        const order = dbOrders.getById(orderId);
+        const order = await dbOrders.getById(orderId);
         if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
         if (action === 'VERIFY') {
             // Validate Seller Identity
             // 1. Check if email provided matches the seller of the items
             const orderSellerEmail = order.items[0]?.sellerEmail || process.env.EMAIL_USER || "admin@agronova.com";
-            
+
             // Case-insensitive check
             if (body.sellerEmail.trim().toLowerCase() !== orderSellerEmail.trim().toLowerCase()) {
-                 return NextResponse.json({ success: false, error: "Email does not match the seller record." }, { status: 403 });
+                return NextResponse.json({ success: false, error: "Email does not match the seller record." }, { status: 403 });
             }
 
             // 2. Prevent Self-Verification (Buyer != Seller)
@@ -57,11 +57,11 @@ export async function POST(req: Request) {
             if (inputUpi !== storedUpi) {
                 // Formatting mismatch or wrong ID
                 const newTries = (order.tries || 0) + 1;
-                
+
                 if (newTries >= 5) {
                     // Too many wrong attempts => Cancel Order (Security Risk or Fraud)
-                    dbOrders.update(orderId, { status: 'FAILED', tries: newTries });
-                    
+                    await dbOrders.update(orderId, { status: 'FAILED', tries: newTries });
+
                     // Strike against Buyer? Or just notify? 
                     // User said: "order will be cancelled and buyer will be informed".
                     await sendMail(
@@ -69,22 +69,22 @@ export async function POST(req: Request) {
                         `Order Cancelled #${orderId}`,
                         EmailTemplate.BuyerFailed(orderId)
                     );
-                    
+
                     return NextResponse.json({ success: true, status: 'FAILED', message: "Order Cancelled due to repeated verification failures." });
                 } else {
                     // Soft Fail
-                    dbOrders.update(orderId, { tries: newTries });
-                    return NextResponse.json({ 
-                        success: true, 
-                        status: 'PENDING_SELLER', 
-                        remaining: 5 - newTries 
+                    await dbOrders.update(orderId, { tries: newTries });
+                    return NextResponse.json({
+                        success: true,
+                        status: 'PENDING_SELLER',
+                        remaining: 5 - newTries
                     });
                 }
             }
 
             // If Match -> Success
-            dbOrders.update(orderId, { status: 'VERIFIED' });
-            
+            await dbOrders.update(orderId, { status: 'VERIFIED' });
+
             // Send Success Email to Seller with Shipping Details
             await transporter.sendMail({
                 from: '"AgriStore" <' + process.env.EMAIL_USER + '>',
@@ -94,18 +94,18 @@ export async function POST(req: Request) {
             });
 
             return NextResponse.json({ success: true, status: 'VERIFIED' });
-        } 
+        }
         else if (action === 'REJECT') {
             // Failure Logic
             const newTries = (order.tries || 0) + 1;
-            
+
             if (newTries >= 5) {
                 // Permanently Fail
-                dbOrders.update(orderId, { status: 'FAILED', tries: newTries });
-                
+                await dbOrders.update(orderId, { status: 'FAILED', tries: newTries });
+
                 // Strike Logic
-                dbUsers.addStrike(order.buyerEmail, "Payment Verification Failed 5x", orderId);
-                
+                await dbUsers.addStrike(order.buyerEmail, "Payment Verification Failed 5x", orderId);
+
                 // Notify Buyer
                 await sendMail(
                     order.buyerEmail,
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
                 return NextResponse.json({ success: true, status: 'FAILED' });
             } else {
                 // Just increment
-                dbOrders.update(orderId, { tries: newTries });
+                await dbOrders.update(orderId, { tries: newTries });
                 return NextResponse.json({ success: true, status: 'PENDING_SELLER', tries: newTries, message: `Retry recorded. ${5 - newTries} attempts remaining.` });
             }
         }

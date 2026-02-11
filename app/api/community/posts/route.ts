@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbPosts } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
     try {
-        const posts = dbPosts.getAll();
+        const posts = await dbPosts.getAll();
         return NextResponse.json(posts);
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
@@ -19,7 +21,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
-        const newPost = dbPosts.create({
+        const newPost = await dbPosts.create({
             userEmail,
             userName,
             userRole,
@@ -42,14 +44,14 @@ export async function DELETE(req: Request) {
         console.log(`[API] DELETE Post Request: id=${id}, userEmail=${userEmail}`);
 
         if (!id || !userEmail) {
-             console.log("[API] Missing id or userEmail");
-             return NextResponse.json({ error: "Missing id or userEmail" }, { status: 400 });
+            console.log("[API] Missing id or userEmail");
+            return NextResponse.json({ error: "Missing id or userEmail" }, { status: 400 });
         }
 
-        const success = dbPosts.delete(id, userEmail);
+        const success = await dbPosts.delete(id, userEmail);
         console.log(`[API] Delete result: ${success}`);
-        
-        if(!success) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
+
+        if (!success) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
 
         return NextResponse.json({ success: true });
     } catch (e: any) {
@@ -62,18 +64,18 @@ export async function PUT(req: Request) {
     try {
         const body = await req.json();
         const { postId, content, userEmail } = body;
-        
+
         console.log(`[API] PUT Post Request: id=${postId}, userEmail=${userEmail}`);
 
-        if(!postId || !content || !userEmail) {
+        if (!postId || !content || !userEmail) {
             return NextResponse.json({ error: "Missing fields" }, { status: 400 });
         }
 
-        const result = dbPosts.edit(postId, userEmail, content);
-        if(!result) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
-        
+        const result = await dbPosts.edit(postId, userEmail, content);
+        if (!result) return NextResponse.json({ error: "Unauthorized or Not Found" }, { status: 403 });
+
         return NextResponse.json(result);
-    } catch(e: any) {
-         return NextResponse.json({ error: e.message }, { status: 500 });
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
     }
 }

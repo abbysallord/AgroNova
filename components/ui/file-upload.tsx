@@ -27,15 +27,30 @@ const secondaryVariant = {
 
 export const FileUpload = ({
   onChange,
+  maxFiles = 0, // 0 means unlimited
+  accept = { "image/*": [] } // Default to images
 }: {
   onChange?: (files: File[]) => void;
+  maxFiles?: number;
+  accept?: Record<string, string[]>;
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (newFiles: File[]) => {
-    setFiles((prevFiles) => [...prevFiles, ...newFiles]);
-    onChange && onChange(newFiles);
+    // If maxFiles is 1, replace entirely. If maxFiles > 1, append but slice.
+    if (maxFiles === 1) {
+      setFiles(newFiles.slice(0, 1));
+      onChange && onChange(newFiles.slice(0, 1));
+    } else {
+      setFiles((prevFiles) => {
+        const updated = [...prevFiles, ...newFiles];
+        return maxFiles > 0 ? updated.slice(0, maxFiles) : updated;
+      });
+      onChange && onChange(newFiles); // Note: parent might need full list if it doesn't maintain state, but here we just pass new ones? 
+      // Actually, typical pattern is to pass the FULL updated list or just new ones. 
+      // The previous code passed `newFiles`. Let's stick to that but for single file mode we must send the single file.
+    }
   };
 
   const handleRemoveFile = (index: number) => {
@@ -49,7 +64,9 @@ export const FileUpload = ({
   };
 
   const { getRootProps, isDragActive } = useDropzone({
-    multiple: false,
+    multiple: maxFiles !== 1,
+    maxFiles: maxFiles > 0 ? maxFiles : undefined,
+    accept,
     noClick: true,
     onDrop: handleFileChange,
     onDropRejected: (error) => {
@@ -93,12 +110,12 @@ export const FileUpload = ({
                   )}
                 >
                   <div className="absolute top-2 right-2 z-50">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleRemoveFile(idx); }} 
-                        className="p-1 bg-neutral-100 dark:bg-neutral-800 hover:bg-red-100 hover:text-red-500 rounded-full text-neutral-500 transition-colors"
-                      >
-                          <IconX size={14} />
-                      </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRemoveFile(idx); }}
+                      className="p-1 bg-neutral-100 dark:bg-neutral-800 hover:bg-red-100 hover:text-red-500 rounded-full text-neutral-500 transition-colors"
+                    >
+                      <IconX size={14} />
+                    </button>
                   </div>
                   <div className="flex justify-between w-full items-center gap-4">
                     <motion.p
@@ -193,11 +210,10 @@ export function GridPattern() {
           return (
             <div
               key={`${col}-${row}`}
-              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${
-                index % 2 === 0
+              className={`w-10 h-10 flex shrink-0 rounded-[2px] ${index % 2 === 0
                   ? "bg-gray-50 dark:bg-neutral-950"
                   : "bg-gray-50 dark:bg-neutral-950 shadow-[0px_0px_1px_3px_rgba(255,255,255,1)_inset] dark:shadow-[0px_0px_1px_3px_rgba(0,0,0,1)_inset]"
-              }`}
+                }`}
             />
           );
         })

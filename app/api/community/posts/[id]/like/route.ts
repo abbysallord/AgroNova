@@ -10,7 +10,7 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
 
         if (!userEmail) return NextResponse.json({ error: "Missing user" }, { status: 400 });
 
-        const updatedPost = dbPosts.toggleLike(id, userEmail);
+        const updatedPost = await dbPosts.toggleLike(id, userEmail);
 
         if (!updatedPost) return NextResponse.json({ error: "Post not found" }, { status: 404 });
 

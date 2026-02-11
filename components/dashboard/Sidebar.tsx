@@ -18,12 +18,15 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export function AgroSidebar() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const links = [
+  const { user } = useAuth();
+
+  const commonLinks = [
     {
       label: "Dashboard",
       href: "/dashboard",
@@ -31,6 +34,16 @@ export function AgroSidebar() {
         <IconLayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
+    {
+      label: "Profile",
+      href: "/dashboard/profile",
+      icon: (
+        <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ];
+
+  const farmerLinks = [
     {
       label: "Pest Detection",
       href: "/dashboard/pest-detection",
@@ -67,6 +80,16 @@ export function AgroSidebar() {
       ),
     },
     {
+      label: "Farm Reports",
+      href: "/dashboard/reports",
+      icon: (
+        <IconReportAnalytics className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ];
+
+  const userLinks = [
+    {
       label: "Agri Store",
       href: "/dashboard/store",
       icon: (
@@ -80,28 +103,97 @@ export function AgroSidebar() {
         <IconUsers className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
       ),
     },
-    {
-      label: "Farm Reports",
-      href: "/dashboard/reports",
-      icon: (
-        <IconReportAnalytics className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
-    {
-      label: "Profile",
-      href: "/dashboard/profile",
-      icon: (
-        <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-      ),
-    },
   ];
+
+
+
+  // Refined Logic based on typical app flow:
+  // Common: Dashboard, Profile
+  // Farmer Specific: Pest, Soil, Weather, Market, Schemes, Reports
+  // User Specific: Store (Buy) - Farmers might access 'Store' to Sell? Or 'Market Price'?
+  // Shared: Community
+
+  const getLinks = () => {
+    const base = [
+      {
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: <IconLayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+    ];
+
+    const farmerSpecific = [
+      {
+        label: "Weather",
+        href: "/dashboard/weather",
+        icon: <IconCloudStorm className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Pest Detection",
+        href: "/dashboard/pest-detection",
+        icon: <IconBug className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Soil Analysis",
+        href: "/dashboard/soil-analysis",
+        icon: <IconLeaf className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Market Price",
+        href: "/dashboard/market-price",
+        icon: <IconChartInfographic className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Govt Schemes",
+        href: "/dashboard/schemes",
+        icon: <IconBuildingBank className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Farm Reports",
+        href: "/dashboard/reports",
+        icon: <IconReportAnalytics className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+    ];
+
+    const userSpecific = [
+      {
+        label: "Agri Store",
+        href: "/dashboard/store",
+        icon: <IconShoppingBag className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+      {
+        label: "Community",
+        href: "/dashboard/community",
+        icon: <IconUsers className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+    ];
+
+    const profile = [
+      {
+        label: "Profile",
+        href: "/dashboard/profile",
+        icon: <IconUserCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
+      },
+    ];
+
+    if (user?.role === "Farmer") {
+      // Farmers also need Community and maybe Store (to see what's listing?)
+      // For strict separation as requested:
+      return [...base, ...farmerSpecific, ...userSpecific, ...profile];
+    } else {
+      // Consumers
+      return [...base, ...userSpecific, ...profile];
+    }
+  };
+
+  const links = getLinks();
 
   return (
     <Sidebar open={open} setOpen={setOpen}>
       <SidebarBody className="justify-between gap-10">
         <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
           <div className="flex flex-col">
-              <Logo />
+            <Logo />
           </div>
           <div className="mt-8 flex flex-col gap-2">
             {links.map((link, idx) => (
@@ -116,7 +208,7 @@ export function AgroSidebar() {
               href: "#",
               icon: <IconLogout className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />,
             }}
-             onClick={() => router.push("/")}
+            onClick={() => router.push("/")}
           />
         </div>
       </SidebarBody>

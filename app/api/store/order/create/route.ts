@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { dbOrders } from '@/lib/db';
-import { sendVerificationEmail } from '@/lib/email'; 
+import { sendVerificationEmail } from '@/lib/email';
 import { EmailTemplate } from '@/lib/email-templates';
 
 // We need a way to send generic email, assuming 'sendVerificationEmail' is adaptable or we create a new helper.
@@ -51,26 +51,26 @@ export async function POST(req: Request) {
             const sellerGroup = group as any;
             // Extract Seller Email from the first item (assuming same seller per group)
             // Extract Seller Email from the first item (assuming same seller per group)
-            const sellerEmail = sellerGroup.items[0]?.sellerEmail || process.env.EMAIL_USER || "admin@agronova.com"; 
-            
+            const sellerEmail = sellerGroup.items[0]?.sellerEmail || process.env.EMAIL_USER || "admin@agronova.com";
+
             // Create Order in DB
             const newOrder = await dbOrders.create({
-                id: `ORD-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+                id: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                 status: 'PENDING_SELLER',
-                createdAt: new Date().toISOString(),
+                // createdAt is handled by DB
                 tries: 0,
-                buyerEmail: body.buyerEmail, 
+                buyerEmail: body.buyerEmail,
                 sellerVpa: vpa,
                 amount: sellerGroup.total,
                 items: sellerGroup.items,
-                buyerUpiIndex: userInputs[vpa] || "UNKNOWN", 
+                buyerUpiIndex: userInputs[vpa] || "UNKNOWN",
                 shippingAddress: address || "No address provided"
             });
 
             createdOrders.push(newOrder);
 
             // 3. Send Sub-Order Emails
-            
+
             // A. Send Invoice to Buyer
             await transporter.sendMail({
                 from: '"AgriStore" <' + process.env.EMAIL_USER + '>',
