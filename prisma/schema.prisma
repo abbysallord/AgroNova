@@ -21,6 +21,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Profile Fields
+  phone     String?
+  location  String?
+  about     String?
+  avatar    String?  // Base64 or URL
+  farmSize  String?
+  crops     String[] // PostgreSQL array
+  
   // Relationships
   strikes   Strike[]
   posts     Post[]

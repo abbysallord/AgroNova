@@ -22,6 +22,13 @@ export interface User {
     status: 'CLEAR' | 'YELLOW' | 'RED' | 'BLACK';
     followers?: string[];
     following?: string[];
+    // Profile Fields
+    phone?: string;
+    location?: string;
+    about?: string;
+    avatar?: string;
+    farmSize?: string;
+    crops?: string[];
 }
 
 export interface Post {
@@ -29,6 +36,7 @@ export interface Post {
     userEmail: string;
     userName: string;
     userRole: string;
+    userAvatar?: string;
     content: string;
     image?: string;
     likes: string[];
@@ -205,6 +213,7 @@ export const dbPosts = {
             userEmail: p.user.email,
             userName: p.user.name || "Unknown",
             userRole: p.user.role,
+            userAvatar: p.user.avatar || undefined,
             content: p.content,
             image: p.image,
             likes: p.likes ? JSON.parse(p.likes) : [],
@@ -213,6 +222,7 @@ export const dbPosts = {
                 id: c.id,
                 userEmail: c.user.email,
                 userName: c.user.name || "Unknown",
+                userAvatar: c.user.avatar || undefined,
                 text: c.text,
                 date: c.date.toISOString()
             }))
@@ -238,6 +248,7 @@ export const dbPosts = {
             userEmail: newPost.user.email,
             userName: newPost.user.name || "Unknown",
             userRole: newPost.user.role,
+            userAvatar: newPost.user.avatar || undefined,
             content: newPost.content,
             image: newPost.image,
             likes: [],
@@ -292,6 +303,7 @@ export const dbPosts = {
             id: newComment.id,
             userEmail: newComment.user.email,
             userName: newComment.user.name || "Unknown",
+            userAvatar: newComment.user.avatar || undefined,
             text: newComment.text,
             date: newComment.date.toISOString()
         };

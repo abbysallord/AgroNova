@@ -12,12 +12,13 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 
 // --- Types ---
-interface Comment { id: string; userEmail: string; userName: string; text: string; date: string; }
+interface Comment { id: string; userEmail: string; userName: string; userAvatar?: string; text: string; date: string; }
 interface Post {
     id: string;
     userEmail: string;
     userName: string;
     userRole: string;
+    userAvatar?: string;
     content: string;
     image?: string;
     likes: string[];
@@ -121,6 +122,8 @@ export default function CommunityPage() {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userEmail: user.email, userName: user.name || "Farmer", userRole: "farmer", content, image })
         });
+        // fetchPosts() handles reload, but if we wanted optimistic update we'd need avatar here too.
+        // For now relying on fetchPosts.
         fetchPosts();
     };
 
@@ -157,7 +160,14 @@ export default function CommunityPage() {
 
     const handleComment = async (postId: string, text: string) => {
         if (!user) return;
-        const newComment: Comment = { id: Date.now().toString(), userEmail: user.email, userName: user.name || "User", text, date: new Date().toISOString() };
+        const newComment: Comment = {
+            id: Date.now().toString(),
+            userEmail: user.email,
+            userName: user.name || "User",
+            userAvatar: user.avatar,
+            text,
+            date: new Date().toISOString()
+        };
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
         await fetch("/api/community/posts/comment", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -459,8 +469,12 @@ const CreatePostWidget = ({ user, refresh, onPost }: any) => {
     return (
         <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-4 shadow-sm">
             <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-neutral-800 flex items-center justify-center text-green-700 dark:text-green-400 font-bold">
-                    {user?.name?.[0] || "U"}
+                <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-neutral-800 flex items-center justify-center text-green-700 dark:text-green-400 font-bold overflow-hidden relative">
+                    {user?.avatar ? (
+                        <Image src={user.avatar} alt={user.name || "User"} fill className="object-cover" />
+                    ) : (
+                        user?.name?.[0] || "U"
+                    )}
                 </div>
                 <div className="flex-1">
                     <textarea
@@ -510,8 +524,12 @@ function PostCard({ post, user, onLike, onDelete, onComment, onDeleteComment, on
             <div className="p-4 md:p-6">
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
-                            {post.userName?.[0]}
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center font-bold text-gray-600 dark:text-gray-300 overflow-hidden relative">
+                            {post.userAvatar ? (
+                                <Image src={post.userAvatar} alt={post.userName} fill className="object-cover" />
+                            ) : (
+                                post.userName?.[0]
+                            )}
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -558,7 +576,13 @@ function PostCard({ post, user, onLike, onDelete, onComment, onDeleteComment, on
                             <div className="mt-4 space-y-3 pt-3 bg-white dark:bg-neutral-900 -mx-6 px-6 pb-4 border-t border-gray-100 dark:border-neutral-800">
                                 {post.comments?.map((comment: any) => (
                                     <div key={comment.id} className="flex gap-2.5">
-                                        <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0">{comment.userName[0]}</div>
+                                        <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-[10px] font-bold text-gray-600 dark:text-gray-300 shrink-0 overflow-hidden relative">
+                                            {comment.userAvatar ? (
+                                                <Image src={comment.userAvatar} alt={comment.userName} fill className="object-cover" />
+                                            ) : (
+                                                comment.userName[0]
+                                            )}
+                                        </div>
                                         <div className="flex-1">
                                             {editingCommentId === comment.id ? (
                                                 <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ interface AuthContextType {
   sendOtp: (email: string) => Promise<string>;
   verifyOtp: (email: string, code: string) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (updates: Partial<User>) => void;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,30 +60,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("agronova_user", JSON.stringify(userData));
   };
 
-  const updateProfile = (updates: Partial<User>) => {
+  const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
 
-    const updatedUser = { ...user, ...updates };
-    persistUser(updatedUser);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, ...updates }),
+      });
 
-    // Update persistent record (so it survives logout/login)
-    const cleanEmail = normalize(user.email);
-    // Don't update reg for admin special case unless we want to, 
-    // but for 'dshenoyh' we used hardcoded check originally.
-    // We will now try to save to reg for everyone to ensure persistence.
+      if (!res.ok) {
+        throw new Error("Failed to save profile");
+      }
 
-    const regKey = `reg_${cleanEmail}`;
-    const storedReg = localStorage.getItem(regKey);
-
-    if (storedReg) {
-      const currentReg = JSON.parse(storedReg);
-      // Preserve password, overwrite other fields
-      const newReg = { ...currentReg, ...updates };
-      // Remove fields that shouldn't be in reg if any (none really)
-      localStorage.setItem(regKey, JSON.stringify(newReg));
-    } else {
-      // If no reg exists (e.g. hardcoded admin), maybe create one?
-      // For now, only persist to session is guaranteed if no reg exists.
+      const updatedData = await res.json();
+      // Merge returned data with current user state
+      const updatedUser = { ...user, ...updatedData };
+      persistUser(updatedUser);
+    } catch (error) {
+      console.error("Profile save error:", error);
+      alert("Failed to save changes to server.");
     }
   };
 
