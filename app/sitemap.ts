@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://agronova-app.vercel.app';
+    const baseUrl = 'https://www.agronova.in';
 
     return [
         {

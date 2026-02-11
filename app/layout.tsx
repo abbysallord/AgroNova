@@ -37,14 +37,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://agronova-app.vercel.app"),
+  metadataBase: new URL("https://www.agronova.in"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "AgroNova | AI-Powered Smart Farming Assistant",
     description: "Empowering Indian farmers with AI-driven insights, pest detection, and real-time market prices.",
-    url: "https://agronova-app.vercel.app",
+    url: "https://www.agronova.in",
     siteName: "AgroNova",
     images: [
       {
@@ -98,6 +98,8 @@ import { ChatWidget } from "@/components/landing/ChatWidget";
 
 import { Toaster } from "sonner";
 
+import JsonLd from "@/components/JsonLd";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -108,6 +110,7 @@ export default function RootLayout({
       <body
         className={`${montserrat.variable} ${montserrat.className} antialiased font-sans`}
       >
+        <JsonLd />
         <AuthProvider>
           <ThemeProvider
             attribute="class"

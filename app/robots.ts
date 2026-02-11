@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/', '/dashboard/settings'],
         },
-        sitemap: 'https://agronova-app.vercel.app/sitemap.xml',
+        sitemap: 'https://www.agronova.in/sitemap.xml',
     };
 }
