@@ -289,7 +289,7 @@ export default function CommunityPage() {
                     </div>
 
                     {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center bg-gray-100/50 dark:bg-neutral-800/50 p-3.5 rounded-full border border-gray-200/50 dark:border-neutral-700/50 backdrop-blur-sm">
+                    <div className="hidden md:flex items-center bg-gray-100/50 dark:bg-neutral-800/50 p-4 rounded-full border border-gray-200/50 dark:border-neutral-700/50 backdrop-blur-sm">
                         <nav className="flex space-x-1">
                             {(["feed", "network", "messages"] as const).map(tab => (
                                 <button key={tab}

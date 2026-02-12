@@ -161,3 +161,28 @@
     /* Firefox */
   }
 }
+
+/* Voiceflow Chat Widget Dark Mode Fix */
+/* Ensure input text is visible even in dark mode */
+.dark .vfrc-chat-input textarea,
+.dark input[type="text"] {
+  color: var(--foreground);
+}
+
+/* Specific fix: Force light theme for Voiceflow input to match its white container */
+#voiceflow-chat textarea,
+div[class*="vfrc-"] textarea,
+.vfrc-chat-input textarea {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+}
+
+.dark #voiceflow-chat textarea,
+.dark div[class*="vfrc-"] textarea,
+.dark .vfrc-chat-input textarea {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  /* Force white background to match widget */
+  border: 1px solid #e5e5e5 !important;
+}
