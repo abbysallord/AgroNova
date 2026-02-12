@@ -95,6 +95,7 @@ export const viewport = {
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ChatWidget } from "@/components/landing/ChatWidget";
+import { GoogleTranslate } from "@/components/GoogleTranslate";
 
 import { Toaster } from "sonner";
 
@@ -123,6 +124,7 @@ export default function RootLayout({
           </ThemeProvider>
           <Toaster />
           <ChatWidget />
+          <GoogleTranslate />
         </AuthProvider>
       </body>
     </html>
