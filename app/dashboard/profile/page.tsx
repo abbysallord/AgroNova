@@ -36,6 +36,8 @@ export default function ProfilePage() {
             return;
         }
         if (field === "farmSize") {
+            // Prevent negative numbers
+            if (Number(value) < 0) return;
             // Limit to 4 digits (e.g., 9999 acres max)
             if (value.length > 4) return;
             // distinct check for value size if parsing
@@ -225,9 +227,13 @@ export default function ProfilePage() {
                                         <Input
                                             className="pl-10"
                                             type="number"
+                                            min={0}
                                             max={10000}
                                             value={formData.farmSize || ""}
                                             onChange={(e) => handleChange("farmSize", e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === "-" || e.key === "e") e.preventDefault();
+                                            }}
                                             placeholder="Max 10000"
                                         />
                                     </div>

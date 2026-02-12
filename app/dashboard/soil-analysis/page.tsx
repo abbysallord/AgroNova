@@ -107,7 +107,11 @@ const ManualInputForm = () => {
                                 name="moisture"
                                 placeholder="e.g. 40"
                                 type="number"
+                                min={0}
                                 required
+                                onKeyDown={(e) => {
+                                    if (e.key === "-" || e.key === "e") e.preventDefault();
+                                }}
                                 onInput={(e) => {
                                     if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
                                 }}
@@ -126,7 +130,11 @@ const ManualInputForm = () => {
                                     name="n"
                                     placeholder="50"
                                     type="number"
+                                    min={0}
                                     required
+                                    onKeyDown={(e) => {
+                                        if (e.key === "-" || e.key === "e") e.preventDefault();
+                                    }}
                                     onInput={(e) => {
                                         if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
                                     }}
@@ -139,7 +147,11 @@ const ManualInputForm = () => {
                                     name="p"
                                     placeholder="20"
                                     type="number"
+                                    min={0}
                                     required
+                                    onKeyDown={(e) => {
+                                        if (e.key === "-" || e.key === "e") e.preventDefault();
+                                    }}
                                     onInput={(e) => {
                                         if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
                                     }}
@@ -152,7 +164,11 @@ const ManualInputForm = () => {
                                     name="k"
                                     placeholder="150"
                                     type="number"
+                                    min={0}
                                     required
+                                    onKeyDown={(e) => {
+                                        if (e.key === "-" || e.key === "e") e.preventDefault();
+                                    }}
                                     onInput={(e) => {
                                         if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
                                     }}
@@ -167,7 +183,12 @@ const ManualInputForm = () => {
                                 placeholder="e.g. 6.5"
                                 type="number"
                                 step="0.1"
+                                min={0}
+                                max={14}
                                 required
+                                onKeyDown={(e) => {
+                                    if (e.key === "-" || e.key === "e") e.preventDefault();
+                                }}
                                 onInput={(e) => {
                                     if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
                                 }}
