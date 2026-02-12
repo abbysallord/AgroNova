@@ -42,6 +42,13 @@ export default function CommunityPage() {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<"feed" | "network" | "messages">("feed");
     const [isClient, setIsClient] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 20);
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     // Feed State
     const [posts, setPosts] = useState<Post[]>([]);
@@ -266,20 +273,21 @@ export default function CommunityPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 text-neutral-900 dark:text-gray-100 font-sans transition-colors duration-300">
-            <header className="sticky top-0 z-40 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 shadow-sm transition-colors duration-300">
+            <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-gray-200 dark:border-neutral-800 shadow-sm" : "bg-transparent border-transparent"}`}>
                 <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center shadow-lg shadow-green-600/20">
                             <IconUsers className="text-white w-5 h-5" />
                         </div>
                         <span className="font-bold text-xl tracking-tight text-neutral-900 dark:text-white">AgroNova Community</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <nav className="hidden md:flex space-x-1 bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg">
+                    {/* Desktop Nav */}
+                    <div className="hidden md:flex items-center gap-4">
+                        <nav className="flex space-x-1 bg-gray-100/50 dark:bg-neutral-800/50 p-1 rounded-full border border-gray-200 dark:border-neutral-700">
                             {(["feed", "network", "messages"] as const).map(tab => (
                                 <button key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
+                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm font-semibold" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-neutral-700/50"}`}
                                 >
                                     <span className="capitalize">{tab}</span>
                                 </button>
@@ -288,10 +296,10 @@ export default function CommunityPage() {
                     </div>
                 </div>
                 {/* Mobile Nav */}
-                <div className="md:hidden flex justify-center pb-2 px-2">
-                    <nav className="flex space-x-1 bg-gray-100 dark:bg-neutral-800 p-1 rounded-lg w-full justify-between">
+                <div className="md:hidden px-4 pb-3 border-t border-gray-100 dark:border-neutral-800 pt-2 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md">
+                    <nav className="flex space-x-1 bg-gray-100/50 dark:bg-neutral-800/50 p-1 rounded-xl w-full justify-between border border-gray-200 dark:border-neutral-700">
                         {(["feed", "network", "messages"] as const).map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm" : "text-gray-500"}`}>
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm font-bold" : "text-gray-500 hover:bg-white/50 dark:hover:bg-neutral-700/50"}`}>
                                 <span className="capitalize">{tab}</span>
                             </button>
                         ))}
@@ -478,8 +486,10 @@ const CreatePostWidget = ({ user, refresh, onPost }: any) => {
                 </div>
                 <div className="flex-1">
                     <textarea
-                        value={content} onChange={e => setContent(e.target.value)}
-                        placeholder="What's happening?"
+                        value={content} onChange={e => {
+                            if (e.target.value.length <= 600) setContent(e.target.value);
+                        }}
+                        placeholder="What's happening? (Max 600 chars)"
                         className="w-full bg-transparent border-none focus:ring-0 resize-none outline-none text-base placeholder-gray-400 dark:placeholder-neutral-600 min-h-[80px] text-gray-900 dark:text-white"
                     />
                     {image && (
@@ -492,6 +502,7 @@ const CreatePostWidget = ({ user, refresh, onPost }: any) => {
                         <div className="flex gap-2">
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
                             <button onClick={() => fileInputRef.current?.click()} className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full text-green-600"><IconPhoto size={18} /></button>
+                            <span className={`text-xs self-center ${content.length > 550 ? "text-red-500" : "text-gray-400"}`}>{content.length}/600</span>
                         </div>
                         <button onClick={() => { onPost(content, image); setContent(""); setImage(null); }} disabled={!content.trim() && !image} className="px-4 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-full hover:bg-green-700 disabled:opacity-50">Post</button>
                     </div>

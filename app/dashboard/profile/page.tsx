@@ -46,7 +46,7 @@ export default function ProfilePage() {
             return;
         }
         // About limit
-        if (field === "about" && value.length > 999) return;
+        if (field === "about" && value.length > 300) return;
 
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -204,6 +204,9 @@ export default function ProfilePage() {
                                 value={formData.about || ""}
                                 onChange={(e) => handleChange("about", e.target.value)}
                             />
+                            <div className="text-right text-xs text-gray-400 mt-1">
+                                {(formData.about || "").length}/300
+                            </div>
                         </div>
                     </section>
 
