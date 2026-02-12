@@ -273,37 +273,45 @@ export default function CommunityPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 text-neutral-900 dark:text-gray-100 font-sans transition-colors duration-300">
-            <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border-b border-gray-200 dark:border-neutral-800 shadow-sm" : "bg-transparent border-transparent"}`}>
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-green-600 flex items-center justify-center shadow-lg shadow-green-600/20">
-                            <IconUsers className="text-white w-5 h-5" />
+            <header className={`sticky top-0 z-50 transition-all duration-500 ease-in-out bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 ${scrolled ? "shadow-sm py-2" : "py-3"}`}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300">
+                    <div className="flex items-center justify-between w-full md:w-auto">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-lg shadow-green-600/20">
+                                <IconUsers className="text-white w-6 h-6" />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-xl tracking-tight text-neutral-900 dark:text-white leading-tight">AgroNova</h1>
+                                <p className="text-xs text-green-600 dark:text-green-400 font-medium tracking-wide uppercase">Community</p>
+                            </div>
                         </div>
-                        <span className="font-bold text-xl tracking-tight text-neutral-900 dark:text-white">AgroNova Community</span>
+                        {/* Mobile Menu Toggle could go here if needed, but we use tabs */}
                     </div>
+
                     {/* Desktop Nav */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <nav className="flex space-x-1 bg-gray-100/50 dark:bg-neutral-800/50 p-1 rounded-full border border-gray-200 dark:border-neutral-700">
+                    <div className="hidden md:flex items-center bg-gray-100/50 dark:bg-neutral-800/50 p-3.5 rounded-full border border-gray-200/50 dark:border-neutral-700/50 backdrop-blur-sm">
+                        <nav className="flex space-x-1">
                             {(["feed", "network", "messages"] as const).map(tab => (
                                 <button key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm font-semibold" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/50 dark:hover:bg-neutral-700/50"}`}
+                                    className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-md transform scale-105" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-white/30 dark:hover:bg-neutral-700/30"}`}
                                 >
                                     <span className="capitalize">{tab}</span>
                                 </button>
                             ))}
                         </nav>
                     </div>
-                </div>
-                {/* Mobile Nav */}
-                <div className="md:hidden px-4 pb-3 border-t border-gray-100 dark:border-neutral-800 pt-2 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-md">
-                    <nav className="flex space-x-1 bg-gray-100/50 dark:bg-neutral-800/50 p-1 rounded-xl w-full justify-between border border-gray-200 dark:border-neutral-700">
-                        {(["feed", "network", "messages"] as const).map(tab => (
-                            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm font-bold" : "text-gray-500 hover:bg-white/50 dark:hover:bg-neutral-700/50"}`}>
-                                <span className="capitalize">{tab}</span>
-                            </button>
-                        ))}
-                    </nav>
+
+                    {/* Mobile Nav - Integrated better */}
+                    <div className="md:hidden w-full overflow-x-auto pb-1 scrollbar-hide">
+                        <nav className="flex space-x-2 p-1 bg-gray-100/50 dark:bg-neutral-800/50 rounded-xl border border-gray-200/50 dark:border-neutral-700/50 backdrop-blur-sm">
+                            {(["feed", "network", "messages"] as const).map(tab => (
+                                <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${activeTab === tab ? "bg-white dark:bg-neutral-700 text-green-600 shadow-sm font-bold" : "text-gray-500"}`}>
+                                    <span className="capitalize">{tab}</span>
+                                </button>
+                            ))}
+                        </nav>
+                    </div>
                 </div>
             </header>
 
