@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
@@ -9,10 +10,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
-    if (!process.env.MISTRAL_API_KEY) {
-      console.error("MISTRAL_API_KEY is missing");
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is missing");
       return NextResponse.json(
-        { error: "Configuration Error: MISTRAL_API_KEY is missing in environment variables." },
+        { error: "Configuration Error: OPENAI_API_KEY is missing in environment variables." },
         { status: 500 }
       );
     }
@@ -46,35 +47,25 @@ export async function POST(req: Request) {
     - Output strictly valid JSON. No markdown code blocks. 
     - Keep sentences short, simple, and encouraging for a farmer.`;
 
-    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.MISTRAL_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "pixtral-12b-2409",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: dataUrl } }
-            ]
-          }
-        ],
-        response_format: { type: "json_object" }
-      })
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Mistral API Error:", response.status, errorText);
-      throw new Error(`Mistral API Error: ${response.status} ${response.statusText}`);
-    }
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: dataUrl } }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" }
+    });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = response.choices?.[0]?.message?.content;
 
     if (!content) {
       throw new Error("No content received from AI");

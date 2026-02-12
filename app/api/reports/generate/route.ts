@@ -1,4 +1,4 @@
-import { Mistral } from "@mistralai/mistralai";
+import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -10,12 +10,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No crops provided" }, { status: 400 });
     }
 
-    if (!process.env.MISTRAL_API_KEY) {
-        return NextResponse.json({ error: "MISTRAL_API_KEY not configured" }, { status: 500 });
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: "OPENAI_API_KEY not configured" }, { status: 500 });
     }
 
-    const client = new Mistral({
-      apiKey: process.env.MISTRAL_API_KEY,
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
 
     const prompt = `Generate a detailed Farm Report for a farmer in ${location || "India"} with ${farmSize || "2"} acres of land, growing: ${crops.join(", ")}.
@@ -51,36 +51,36 @@ export async function POST(req: Request) {
     }
     IMPORTANT: Provide realistic, agricultural data. Be encouraging but factual.`;
 
-    const response = await client.chat.complete({
-      model: "mistral-small-latest",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
           content: prompt,
         },
       ],
-      responseFormat: { type: "json_object" },
+      response_format: { type: "json_object" },
     });
 
     const content = response.choices?.[0]?.message?.content;
 
     if (!content) {
-        throw new Error("No content received from AI");
+      throw new Error("No content received from AI");
     }
 
     try {
-        const cleanText = (content as string).replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonResponse = JSON.parse(cleanText);
-        return NextResponse.json(jsonResponse);
+      const cleanText = (content as string).replace(/```json/g, '').replace(/```/g, '').trim();
+      const jsonResponse = JSON.parse(cleanText);
+      return NextResponse.json(jsonResponse);
     } catch (e) {
-        console.error("JSON Parse Error:", content);
-        return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
+      console.error("JSON Parse Error:", content);
+      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
     }
 
   } catch (error: any) {
     console.error("Report Generation Error:", error);
-    return NextResponse.json({ 
-        error: error.message || "Internal Server Error"
+    return NextResponse.json({
+      error: error.message || "Internal Server Error"
     }, { status: 500 });
   }
 }

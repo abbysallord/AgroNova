@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { Mistral } from "@mistralai/mistralai";
+import OpenAI from "openai";
 
-const client = new Mistral({
-    apiKey: process.env.MISTRAL_API_KEY,
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
         // 2. Fallback to AI if Gov API failed or empty
         if (dataSource === "ai_estimate") {
-            return await generateAiEstimate(crop, state, normalizedCrop, client);
+            return await generateAiEstimate(crop, state, normalizedCrop, openai);
         }
 
         // Return Real Data
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 }
 
 // Helper for AI Fallback with Real-Time Search (RAG)
-async function generateAiEstimate(crop: string, state: string, normalizedCrop: string, client: Mistral) {
+async function generateAiEstimate(crop: string, state: string, normalizedCrop: string, openai: OpenAI) {
     const stateQuery = state && state !== "All States" ? `in ${state}` : "across major Indian states";
 
     // 1. Perform Real-Time Web Search (DuckDuckGo HTML Scraping)
@@ -163,10 +163,10 @@ async function generateAiEstimate(crop: string, state: string, normalizedCrop: s
     }
     `;
 
-    const response = await client.chat.complete({
-        model: "mistral-small-latest",
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
-        responseFormat: { type: "json_object" },
+        response_format: { type: "json_object" },
     });
 
     const content = response.choices && response.choices[0] && response.choices[0].message.content as string;
