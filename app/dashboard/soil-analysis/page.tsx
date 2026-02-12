@@ -81,7 +81,7 @@ const ManualInputForm = () => {
                             <Label htmlFor="location">Location / Region</Label>
                             <div className="relative">
                                 <IconMapPin className="absolute left-3 top-2.5 text-neutral-400" size={18} />
-                                <Input id="location" name="location" placeholder="e.g. Punjab, India" className="pl-10" required />
+                                <Input id="location" name="location" placeholder="e.g. Punjab, India" className="pl-10" required maxLength={100} />
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -89,20 +89,29 @@ const ManualInputForm = () => {
                                 <Label htmlFor="color">Soil Color</Label>
                                 <div className="relative">
                                     <IconPalette className="absolute left-3 top-2.5 text-neutral-400" size={18} />
-                                    <Input id="color" name="color" placeholder="e.g. Reddish Brown" className="pl-10" required />
+                                    <Input id="color" name="color" placeholder="e.g. Reddish Brown" className="pl-10" required maxLength={50} />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="texture">Texture</Label>
                                 <div className="relative">
                                     <IconGrain className="absolute left-3 top-2.5 text-neutral-400" size={18} />
-                                    <Input id="texture" name="texture" placeholder="e.g. Clay, Sandy" className="pl-10" required />
+                                    <Input id="texture" name="texture" placeholder="e.g. Clay, Sandy" className="pl-10" required maxLength={50} />
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="moisture">Moisture Content (%)</Label>
-                            <Input id="moisture" name="moisture" placeholder="e.g. 40" type="number" required />
+                            <Input
+                                id="moisture"
+                                name="moisture"
+                                placeholder="e.g. 40"
+                                type="number"
+                                required
+                                onInput={(e) => {
+                                    if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                                }}
+                            />
                         </div>
                     </div>
 
@@ -112,20 +121,57 @@ const ManualInputForm = () => {
                         <div className="grid grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="n">N (mg/kg)</Label>
-                                <Input id="n" name="n" placeholder="50" type="number" required />
+                                <Input
+                                    id="n"
+                                    name="n"
+                                    placeholder="50"
+                                    type="number"
+                                    required
+                                    onInput={(e) => {
+                                        if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                                    }}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="p">P (mg/kg)</Label>
-                                <Input id="p" name="p" placeholder="20" type="number" required />
+                                <Input
+                                    id="p"
+                                    name="p"
+                                    placeholder="20"
+                                    type="number"
+                                    required
+                                    onInput={(e) => {
+                                        if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                                    }}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="k">K (mg/kg)</Label>
-                                <Input id="k" name="k" placeholder="150" type="number" required />
+                                <Input
+                                    id="k"
+                                    name="k"
+                                    placeholder="150"
+                                    type="number"
+                                    required
+                                    onInput={(e) => {
+                                        if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                                    }}
+                                />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="ph">pH Level</Label>
-                            <Input id="ph" name="ph" placeholder="e.g. 6.5" type="number" step="0.1" required />
+                            <Input
+                                id="ph"
+                                name="ph"
+                                placeholder="e.g. 6.5"
+                                type="number"
+                                step="0.1"
+                                required
+                                onInput={(e) => {
+                                    if (e.currentTarget.value.length > 5) e.currentTarget.value = e.currentTarget.value.slice(0, 5);
+                                }}
+                            />
                         </div>
                     </div>
                 </div>

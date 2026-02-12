@@ -166,6 +166,7 @@ export default function WeatherPage() {
                         <Input
                             placeholder="Search city..."
                             value={searchQuery}
+                            maxLength={50}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 h-10 w-full md:w-64 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm focus:bg-white dark:focus:bg-neutral-900 text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-500 dark:placeholder:text-neutral-400 transition-all ring-offset-0 focus:ring-2 focus:ring-blue-500/20 border-neutral-200 dark:border-neutral-700"
                         />
@@ -219,6 +220,7 @@ export default function WeatherPage() {
                             <Input
                                 placeholder="e.g. Rice, Tomato, Cotton"
                                 value={crops}
+                                maxLength={50}
                                 onChange={(e) => setCrops(e.target.value)}
                                 className="h-12 px-4 shadow-sm"
                             />
