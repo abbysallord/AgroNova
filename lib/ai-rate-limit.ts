@@ -23,7 +23,6 @@ export async function checkAiRateLimit(identifier: string) {
     if (!identifier) return { success: true };
 
     const now = new Date();
-
     // Clean up identifier (e.g. handle localhost IPv6)
     const cleanIdentifier = identifier === "::1" ? "127.0.0.1" : identifier;
 
@@ -42,6 +41,7 @@ export async function checkAiRateLimit(identifier: string) {
                     minuteCount: 1,
                     hourCount: 1,
                     dayCount: 1,
+                    lastRequest: now,
                 },
             });
             return { success: true };
@@ -68,9 +68,7 @@ export async function checkAiRateLimit(identifier: string) {
             updated = true;
         }
 
-        // Check limits (using strict > or >= depending on if we count current request before or after)
-        // I am incrementing AFTER check, so checking >= limit means "already full".
-
+        // Check limits BEFORE incrementing
         const randomMsg = getRandomMessage();
 
         if (dayCount >= RATE_LIMITS.DAY) {
@@ -92,7 +90,7 @@ export async function checkAiRateLimit(identifier: string) {
             };
         }
 
-        // Increment
+        // Increment counts
         await prisma.rateLimit.update({
             where: { identifier: cleanIdentifier },
             data: {
