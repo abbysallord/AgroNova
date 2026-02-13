@@ -18,7 +18,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("release.keystore")
+            storeFile rootProject.file('app/release.keystore')
             storePassword "agronova123"
             keyAlias "agronova"
             keyPassword "agronova123"

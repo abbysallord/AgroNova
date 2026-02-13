@@ -39,4 +39,5 @@ next-env.d.ts
 mobile-app/
 
 # Android Keystore (SECURITY!)
-android/app/release.keystore
+*.keystore
+*.jks
