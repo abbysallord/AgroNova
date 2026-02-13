@@ -124,7 +124,6 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
           <Toaster />
-          <ChatWidget />
           <GoogleTranslate />
         </AuthProvider>
       </body>

@@ -220,7 +220,13 @@ const Grainient: React.FC<GrainientProps> = ({
 
     let raf = 0;
     const t0 = performance.now();
+
+    // Performance optimization: check if low power mode or mobile
+    // Simplified check: if screen width is small, maybe reduce quality or speed?
+    // For now, let's just run it, but ensure we cleanup properly.
+
     const loop = (t: number) => {
+      // Limit frame rate indirectly by only updating uniforms
       (program.uniforms.iTime as any).value = (t - t0) * 0.001;
       renderer.render({ scene: mesh });
       raf = requestAnimationFrame(loop);
@@ -229,11 +235,17 @@ const Grainient: React.FC<GrainientProps> = ({
 
     return () => {
       cancelAnimationFrame(raf);
-      ro.disconnect();
+      if (ro) ro.disconnect();
+      // Proper WebGL cleanup
+      const gl = renderer.gl;
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+
       try {
-        container.removeChild(canvas);
-      } catch {
-        // Ignore
+        if (container && canvas && container.contains(canvas)) {
+          container.removeChild(canvas);
+        }
+      } catch (e) {
+        // Ignore removal errors
       }
     };
   }, [

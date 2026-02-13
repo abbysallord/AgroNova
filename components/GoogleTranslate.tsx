@@ -1,6 +1,6 @@
-
 "use client";
 
+import Script from "next/script";
 import { useEffect } from "react";
 
 declare global {
@@ -11,27 +11,28 @@ declare global {
 }
 
 export const GoogleTranslate = () => {
+
     useEffect(() => {
-        var addScript = document.createElement("script");
-        addScript.setAttribute(
-            "src",
-            "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-        );
-        document.body.appendChild(addScript);
-        window.googleTranslateElementInit = googleTranslateElementInit;
+        window.googleTranslateElementInit = () => {
+            if (window.google?.translate?.TranslateElement) {
+                new window.google.translate.TranslateElement(
+                    {
+                        pageLanguage: "en",
+                        autoDisplay: false,
+                    },
+                    "google_translate_element"
+                );
+            }
+        };
     }, []);
 
-    const googleTranslateElementInit = () => {
-        new window.google.translate.TranslateElement(
-            {
-                pageLanguage: "en",
-                autoDisplay: false,
-            },
-            "google_translate_element"
-        );
-    };
-
     return (
-        <div id="google_translate_element" style={{ display: "none" }}></div>
+        <>
+            <div id="google_translate_element" style={{ display: "none" }}></div>
+            <Script
+                src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+                strategy="lazyOnload"
+            />
+        </>
     );
 };
