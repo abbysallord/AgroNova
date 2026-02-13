@@ -62,10 +62,20 @@ export function LanguageSelector() {
     };
 
     const handleLanguageChange = (langCode: string) => {
-        // Set cookie and reload
-        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
-        document.cookie = `googtrans=/en/${langCode}; path=/;`; // Fallback for localhost
-        window.location.reload();
+        // 1. Remove existing cookie
+        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
+
+        // 2. Set new cookie
+        const newLang = `/en/${langCode}`;
+        document.cookie = `googtrans=${newLang}; path=/;`;
+        document.cookie = `googtrans=${newLang}; path=/; domain=${window.location.hostname}`;
+
+        // 3. Force reload
+        setTimeout(() => {
+            window.location.reload();
+        }, 100);
     };
 
     const currentLanguage = languages.find((l) => l.code === currentLang) || languages[0];
