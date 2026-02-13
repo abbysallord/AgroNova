@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+import { checkAiRateLimit } from "@/lib/ai-rate-limit";
+
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "unknown";
+    const rateLimit = await checkAiRateLimit(ip);
+
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: rateLimit.message }, { status: 429 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("image") as File;
 

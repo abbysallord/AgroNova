@@ -135,3 +135,19 @@ model Product {
   farmerId    String
   farmer      User     @relation(fields: [farmerId], references: [id])
 }
+
+model RateLimit {
+  id          String   @id @default(uuid())
+  identifier  String   @unique
+  
+  minuteCount Int      @default(0)
+  minuteExpiry DateTime
+  
+  hourCount   Int      @default(0)
+  hourExpiry   DateTime
+  
+  dayCount    Int      @default(0)
+  dayExpiry    DateTime
+  
+  lastRequest DateTime @default(now())
+}

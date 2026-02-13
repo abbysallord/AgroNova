@@ -1,8 +1,17 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
 
+import { checkAiRateLimit } from "@/lib/ai-rate-limit";
+
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || "127.0.0.1";
+    const rateLimit = await checkAiRateLimit(ip);
+
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: rateLimit.message }, { status: 429 });
+    }
+
     const { crops, weatherData } = await req.json();
 
     if (!process.env.OPENAI_API_KEY) {
