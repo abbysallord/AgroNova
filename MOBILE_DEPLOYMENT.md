@@ -96,3 +96,38 @@ Once you have the `.apk` file:
 1.  **Website Hosting**: Upload it to your website (e.g., `agronova.in/download`) and link to it.
 2.  **GitHub Releases**: Attach the APK to a GitHub Release.
 3.  **Third-Party Stores**: Upload to Amazon Appstore, Samsung Galaxy Store, or GetJar.
+
+## 8. Update App Name, Icon & Splash Screen
+
+Native assets like the App Icon and Splash Screen are **NOT** updated from the website automatically. You must generate them manually.
+
+### Step 1: Install Asset Tool
+```bash
+npm install @capacitor/assets --save-dev
+```
+
+### Step 2: Prepare Images
+Create a folder named `assets` in the root of your project and add:
+-   `icon.png` (Must be at least 1024x1024 px)
+-   `splash.png` (Must be at least 2732x2732 px)
+-   `splash-dark.png` (Optional, for dark mode)
+
+### Step 3: Generate Assets
+Run the following command to automatically generate all required Android sizes:
+```bash
+npx @capacitor/assets generate --android
+```
+
+### Step 4: Sync
+```bash
+npx cap sync
+```
+Your app icon and splash screen are now updated in the Android project.
+
+### Changing App Name
+To change the app name displayed on the phone:
+1.  Open `android/app/src/main/res/values/strings.xml`.
+2.  Change the value of `app_name`:
+    ```xml
+    <string name="app_name">AgroNova</string>
+    ```
