@@ -70,3 +70,29 @@ A release keystore has been generated for you.
 ## 5. Next Steps
 
 See `PLAY_STORE_CHECKLIST.md` for submission requirements.
+
+## 6. Alternative: Building an APK (For Direct Install)
+
+If you want to distribute the app yourself (without Google Play), you need an **APK** file, not an AAB.
+
+### Option A: Using Android Studio
+1.  Go to **Build > Generate Signed Bundle / APK**.
+2.  Select **APK** (instead of Android App Bundle) -> Next.
+3.  Use the same keystore credentials as above.
+4.  Select **release** -> Finish.
+5.  Click the "Locate" link in the notification when done.
+
+### Option B: Command Line
+Run this command in the `android` directory:
+```bash
+./gradlew assembleRelease
+```
+The signed APK will be at:
+`android/app/build/outputs/apk/release/app-release.apk`
+
+## 7. Direct Distribution Options
+
+Once you have the `.apk` file:
+1.  **Website Hosting**: Upload it to your website (e.g., `agronova.in/download`) and link to it.
+2.  **GitHub Releases**: Attach the APK to a GitHub Release.
+3.  **Third-Party Stores**: Upload to Amazon Appstore, Samsung Galaxy Store, or GetJar.
