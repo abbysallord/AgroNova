@@ -16,6 +16,8 @@ model User {
   email     String   @unique
   name      String?
   password  String   // Added password field for auth
+  resetToken String?
+  resetTokenExpiry DateTime?
   role      String   @default("Farmer") // Farmer, User, Admin
   status    String   @default("CLEAR") // CLEAR, YELLOW, RED, BLACK
   createdAt DateTime @default(now())

@@ -58,5 +58,20 @@ export const EmailTemplate = {
             <p>This order has been cancelled.</p>
             <p>If you believe this is an error, please reply to this email immediately with your payment proof (Screenshot/UTR).</p>
         </div>
+
+    `,
+
+    ResetPassword: (resetLink: string) => `
+        <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h1 style="color: #2563eb;">Reset Your Password</h1>
+            <p>Hello,</p>
+            <p>We received a request to reset your password for your AgroNova account.</p>
+            <p>Click the button below to reset it:</p>
+            
+            <a href="${resetLink}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0;">Reset Password</a>
+            
+            <p>If you didn't ask to reset your password, you can safely ignore this email.</p>
+            <p style="font-size: 12px; color: #666;">This link will expire in 1 hour.</p>
+        </div>
     `
 };

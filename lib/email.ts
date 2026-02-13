@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { EmailTemplate } from "./email-templates";
 
 // Configure the email transporter
 // User must provide EMAIL_USER and EMAIL_PASS in .env.local
@@ -43,5 +44,29 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   } catch (error) {
     console.error("❌  Error sending email:", error);
     throw new Error("Failed to send verification email.");
+  }
+
+};
+
+export const sendPasswordResetEmail = async (to: string, resetLink: string) => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn("⚠️  Email credentials missing. Password reset email will NOT be sent.");
+    console.log(`[DEV MODE] Reset Link for ${to}: ${resetLink}`);
+    return;
+  }
+
+  const mailOptions = {
+    from: `"AgroNova Security" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: "Reset Your AgroNova Password",
+    html: EmailTemplate.ResetPassword(resetLink),
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`✅  Password reset email sent to ${to}`);
+  } catch (error) {
+    console.error("❌  Error sending password reset email:", error);
+    throw new Error("Failed to send password reset email.");
   }
 };
