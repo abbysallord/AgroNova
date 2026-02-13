@@ -34,3 +34,9 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# Capacitor
+mobile-app/
+
+# Android Keystore (SECURITY!)
+android/app/release.keystore

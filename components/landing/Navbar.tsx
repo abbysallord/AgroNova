@@ -39,7 +39,7 @@ export const Navbar = () => {
   );
 
   return (
-    <ResizableNavbar className="top-8">
+    <ResizableNavbar className="top-[calc(2rem+env(safe-area-inset-top))]">
       <NavBody>
         <div className="relative z-50">
           <Link href="/" className="flex items-center gap-2">

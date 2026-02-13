@@ -62,15 +62,25 @@ export function LanguageSelector() {
     };
 
     const handleLanguageChange = (langCode: string) => {
-        // 1. Remove existing cookie
-        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
+        const domain = window.location.hostname;
+        const rootDomain = domain.split('.').slice(-2).join('.');
 
-        // 2. Set new cookie
+        // 1. Clear all possible cookie variations
+        const paths = ['/', '/en', `/en/${currentLang}`];
+        const domains = [domain, `.${domain}`, rootDomain, `.${rootDomain}`];
+
+        paths.forEach(path => {
+            domains.forEach(d => {
+                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${d}`;
+                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
+            });
+        });
+
+        // 2. Set new cookie with robust coverage
         const newLang = `/en/${langCode}`;
-        document.cookie = `googtrans=${newLang}; path=/;`;
-        document.cookie = `googtrans=${newLang}; path=/; domain=${window.location.hostname}`;
+        document.cookie = `googtrans=${newLang}; path=/; domain=${domain}`;
+        document.cookie = `googtrans=${newLang}; path=/; domain=.${domain}`;
+        document.cookie = `googtrans=${newLang}; path=/;`; // Fallback for localhost/IP
 
         // 3. Force reload
         setTimeout(() => {
