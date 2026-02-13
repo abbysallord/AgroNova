@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Mistral } from "@mistralai/mistralai";
+import OpenAI from "openai";
 
 import { checkAiRateLimit } from "@/lib/ai-rate-limit";
 
@@ -19,15 +19,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });
     }
 
-    if (!process.env.MISTRAL_API_KEY) {
-      console.error("MISTRAL_API_KEY is missing");
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is missing");
       return NextResponse.json(
-        { error: "Configuration Error: MISTRAL_API_KEY is missing in environment variables." },
+        { error: "Configuration Error: OPENAI_API_KEY is missing in environment variables." },
         { status: 500 }
       );
     }
 
-    const apiKey = process.env.MISTRAL_API_KEY.trim(); // Trim whitespace just in case
+    const apiKey = process.env.OPENAI_API_KEY.trim();
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -59,34 +59,38 @@ export async function POST(req: Request) {
     - Output strictly valid JSON. No markdown code blocks. 
     - Keep sentences short, simple, and encouraging for a farmer.`;
 
-    const client = new Mistral({
+    const openai = new OpenAI({
       apiKey: apiKey,
     });
 
-    const response = await client.chat.complete({
-      model: "pixtral-12b-2409",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { type: "image_url", imageUrl: dataUrl }
-          ] as any
-        }
+            {
+              type: "image_url",
+              image_url: {
+                url: dataUrl,
+              },
+            },
+          ],
+        },
       ],
-      responseFormat: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 1000,
     });
 
-    const content = response.choices?.[0]?.message?.content;
+    const content = response.choices[0].message.content;
 
     if (!content) {
       throw new Error("No content received from AI");
     }
 
     try {
-      // Sometimes models wrap in markdown despite instructions, so we clean it just in case
-      const cleanText = (content as string).replace(/```json/g, '').replace(/```/g, '').trim();
-      const jsonResponse = JSON.parse(cleanText);
+      const jsonResponse = JSON.parse(content);
       return NextResponse.json(jsonResponse);
     } catch (e) {
       console.error("JSON Parse Error:", content);
@@ -96,13 +100,12 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("Analysis Error:", error);
 
-    // Check for rate limits or auth errors
     const status = error?.status || 500;
     const message = error?.message || "Internal Server Error";
 
     if (message.includes("401") || message.includes("Unauthorized") || status === 401) {
       return NextResponse.json({
-        error: "Invalid Mistral API Key. Please update your .env file with a valid MISTRAL_API_KEY.",
+        error: "Invalid OpenAI API Key. Please update your .env file with a valid OPENAI_API_KEY.",
         details: message
       }, { status: 401 });
     }
