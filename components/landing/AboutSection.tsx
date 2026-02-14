@@ -22,7 +22,7 @@ export const AboutSection = () => {
                         <CardBody className="bg-white/40 backdrop-blur-md relative group/card border-black/[0.1] w-full h-auto rounded-xl p-6 border  ">
                             <CardItem translateZ="100" className="w-full mt-4">
                                 <Image
-                                    src="/images/mission.png"
+                                    src="/images/mission.jpg"
                                     height="1000"
                                     width="1000"
                                     className="h-60 w-full object-cover rounded-xl group-hover/card:shadow-xl"
@@ -50,7 +50,7 @@ export const AboutSection = () => {
                         <CardBody className="bg-white/40 backdrop-blur-md relative group/card border-black/[0.1] w-full h-auto rounded-xl p-6 border  ">
                             <CardItem translateZ="100" className="w-full mt-4">
                                 <Image
-                                    src="/images/vision.png"
+                                    src="/images/vision.jpg"
                                     height="1000"
                                     width="1000"
                                     className="h-60 w-full object-cover rounded-xl group-hover/card:shadow-xl"
@@ -78,7 +78,7 @@ export const AboutSection = () => {
                         <CardBody className="bg-white/40 backdrop-blur-md relative group/card border-black/[0.1] w-full h-auto rounded-xl p-6 border  ">
                             <CardItem translateZ="100" className="w-full mt-4">
                                 <Image
-                                    src="/images/community.png"
+                                    src="/images/community.jpg"
                                     height="1000"
                                     width="1000"
                                     className="h-60 w-full object-cover rounded-xl group-hover/card:shadow-xl"

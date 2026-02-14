@@ -12,13 +12,16 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-       {
+      {
         protocol: 'https',
         hostname: 'assets.aceternity.com',
         port: '',
         pathname: '/**',
       },
     ],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
   },
 };
 

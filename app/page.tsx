@@ -4,11 +4,8 @@ import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { CommunitySection } from "@/components/landing/CommunitySection";
 import { AboutSection } from "@/components/landing/AboutSection";
 import { Footer } from "@/components/landing/Footer";
-import Grainient from "@/components/Grainient";
+import GrainientWrapper from "@/components/GrainientWrapper";
 import GradualBlur from "@/components/GradualBlur";
-
-
-
 
 export default function Home() {
   const lightGreenTheme = {
@@ -21,7 +18,7 @@ export default function Home() {
     <div className="relative min-h-screen text-neutral-900">
       {/* Global Fixed Background */}
       <div className="fixed inset-0 z-[-10]">
-        <Grainient
+        <GrainientWrapper
           {...lightGreenTheme}
           grainAmount={0.05}
           grainScale={1.5}
