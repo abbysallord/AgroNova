@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { IconShoppingCart, IconPlus, IconBuildingStore, IconCheck, IconLoader, IconTrash, IconShieldCheck, IconEdit } from "@tabler/icons-react";
 import Image from "next/image";
@@ -38,6 +39,9 @@ interface SellerProfile {
 }
 
 export default function AgriStorePage() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || "";
+
     // --- Data State ---
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,7 +58,16 @@ export default function AgriStorePage() {
             if (res.ok) {
                 const data = await res.json();
                 setProducts(data);
-                setFilteredProducts(data);
+
+                if (initialSearch) {
+                    const lowerSearch = initialSearch.toLowerCase();
+                    setFilteredProducts(data.filter((p: Product) =>
+                        p.name.toLowerCase().includes(lowerSearch) ||
+                        p.seller.toLowerCase().includes(lowerSearch)
+                    ));
+                } else {
+                    setFilteredProducts(data);
+                }
             }
         } catch (e) {
             console.error("Failed to fetch products", e);

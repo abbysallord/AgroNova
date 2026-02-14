@@ -1,26 +1,49 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { IconSearch, IconShoppingCart, IconUsers, IconLeaf, IconArrowRight } from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
+import { IconSearch, IconShoppingCart, IconUsers, IconLeaf, IconArrowRight, IconMessageCircle } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 
 export default function UserDashboardPage() {
     const { user } = useAuth();
+    const router = useRouter();
 
-    // Mock Data for UI (This would come from DB ideally)
-    const featuredProducts = [
-        { id: 1, name: "Fresh Tomatoes", price: "₹40/kg", image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=500&auto=format&fit=crop&q=60" },
-        { id: 2, name: "Organic Potatoes", price: "₹30/kg", image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=500&auto=format&fit=crop&q=60" },
-        { id: 3, name: "Green Spinach", price: "₹20/unit", image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=500&auto=format&fit=crop&q=60" },
-        { id: 4, name: "Red Onions", price: "₹35/kg", image: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?w=500&auto=format&fit=crop&q=60" },
-    ];
+    const [products, setProducts] = useState<any[]>([]);
+    const [topics, setTopics] = useState<any[]>([]);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [loading, setLoading] = useState(true);
 
-    const communityTopics = [
-        { id: 1, title: "Best fertilizer for home garden?", author: "Ravi K.", time: "2h ago", answers: 5 },
-        { id: 2, title: "Where to buy organic seeds?", author: "Priya S.", time: "4h ago", answers: 12 },
-        { id: 3, title: "Mango season predictions 2024", author: "Amit Verma", time: "1d ago", answers: 8 },
-    ];
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [productsRes, topicsRes] = await Promise.all([
+                    fetch("/api/store/products"),
+                    fetch("/api/community/posts")
+                ]);
+
+                const productsData = await productsRes.json();
+                const topicsData = await topicsRes.json();
+
+                setProducts(productsData.slice(0, 4)); // Get top 4
+                setTopics(topicsData.slice(0, 3)); // Get top 3
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            router.push(`/dashboard/store?search=${encodeURIComponent(searchQuery)}`);
+        }
+    };
 
     return (
         <div className="max-w-6xl mx-auto pb-20 space-y-12">
@@ -30,7 +53,7 @@ export default function UserDashboardPage() {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <div className="relative z-10 max-w-2xl">
-                    <p className="text-green-100 font-medium mb-2 uppercase tracking-wide text-sm">Welcome Back</p>
+                    <p className="text-green-100 font-medium mb-2 uppercase tracking-wide text-sm">Consumer Dashboard</p>
                     <h1 className="text-4xl md:text-5xl font-bold mb-6">
                         Hello, {user?.name?.split(" ")[0] || "Friend"}! 👋
                     </h1>
@@ -39,10 +62,17 @@ export default function UserDashboardPage() {
                     </p>
 
                     {/* Search Bar */}
-                    <Link href="/dashboard/store" className="bg-white text-neutral-800 rounded-full px-6 py-4 flex items-center gap-4 shadow-lg hover:shadow-xl transition-all w-full max-w-md cursor-text group">
+                    <form onSubmit={handleSearch} className="bg-white text-neutral-800 rounded-full px-6 py-2 flex items-center gap-4 shadow-lg hover:shadow-xl transition-all w-full max-w-md group focus-within:ring-2 focus-within:ring-green-500/50">
                         <IconSearch className="text-neutral-400 group-hover:text-green-600 transition-colors" size={24} />
-                        <span className="text-neutral-400 font-medium">Search for fresh vegetables, fruits...</span>
-                    </Link>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search for fresh vegetables, fruits..."
+                            className="bg-transparent border-none focus:outline-none w-full py-2 text-neutral-800 font-medium placeholder:text-neutral-400"
+                        />
+                        <button type="submit" className="hidden">Search</button>
+                    </form>
                 </div>
             </div>
 
@@ -57,29 +87,47 @@ export default function UserDashboardPage() {
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {featuredProducts.map((product) => (
-                        <div key={product.id} className="group bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden hover:shadow-xl transition-all duration-300">
-                            <div className="relative h-40 w-full overflow-hidden">
-                                <Image
-                                    src={product.image}
-                                    alt={product.name}
-                                    fill
-                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                                />
-                            </div>
-                            <div className="p-4">
-                                <h3 className="font-bold text-neutral-800 dark:text-white mb-1 group-hover:text-green-600 transition-colors">{product.name}</h3>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-green-600 font-bold">{product.price}</span>
-                                    <button className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-full hover:bg-green-50 dark:hover:bg-green-900/30 text-neutral-600 hover:text-green-600 transition-colors">
-                                        <IconShoppingCart size={16} />
-                                    </button>
+                {loading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="h-64 bg-gray-100 dark:bg-neutral-900 rounded-2xl animate-pulse" />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {products.length > 0 ? products.map((product) => (
+                            <Link key={product.id} href={`/dashboard/store?product=${product.id}`} className="group bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-100 dark:border-neutral-800 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full">
+                                <div className="relative h-40 w-full overflow-hidden bg-gray-100 dark:bg-neutral-800">
+                                    {product.image ? (
+                                        <Image
+                                            src={product.image}
+                                            alt={product.name}
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-neutral-400">
+                                            <IconLeaf size={32} />
+                                        </div>
+                                    )}
                                 </div>
+                                <div className="p-4 flex flex-col flex-1">
+                                    <h3 className="font-bold text-neutral-800 dark:text-white mb-1 group-hover:text-green-600 transition-colors line-clamp-1">{product.name}</h3>
+                                    <div className="mt-auto flex justify-between items-center">
+                                        <span className="text-green-600 font-bold">₹{product.price}/{product.unit}</span>
+                                        <button className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-full hover:bg-green-50 dark:hover:bg-green-900/30 text-neutral-600 hover:text-green-600 transition-colors">
+                                            <IconShoppingCart size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </Link>
+                        )) : (
+                            <div className="col-span-full text-center py-10 text-neutral-500">
+                                No products found. <Link href="/dashboard/store" className="text-green-600 underline">Visit Store</Link>
                             </div>
-                        </div>
-                    ))}
-                </div>
+                        )}
+                    </div>
+                )}
             </section>
 
             {/* 3. Community & Education Grid */}
@@ -96,16 +144,26 @@ export default function UserDashboardPage() {
                         </Link>
                     </div>
                     <div className="space-y-4">
-                        {communityTopics.map((topic) => (
-                            <Link key={topic.id} href="/dashboard/community" className="block p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-md transition-all">
-                                <h3 className="font-medium text-neutral-800 dark:text-neutral-200 mb-2">{topic.title}</h3>
-                                <div className="flex items-center gap-3 text-xs text-neutral-500">
-                                    <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium">{topic.answers} answers</span>
-                                    <span>• Posted by {topic.author}</span>
-                                    <span>• {topic.time}</span>
+                        {loading ? (
+                            [1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-100 dark:bg-neutral-900 rounded-xl animate-pulse" />)
+                        ) : (
+                            topics.length > 0 ? topics.map((topic) => (
+                                <Link key={topic.id} href="/dashboard/community" className="block p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-md transition-all">
+                                    <h3 className="font-medium text-neutral-800 dark:text-neutral-200 mb-2 line-clamp-1">{topic.content}</h3>
+                                    <div className="flex items-center gap-3 text-xs text-neutral-500">
+                                        <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-md font-medium flex items-center gap-1">
+                                            <IconMessageCircle size={12} /> {topic.comments?.length || 0} replies
+                                        </span>
+                                        <span>• Posted by {topic.userName}</span>
+                                        <span>• {new Date(topic.date).toLocaleDateString()}</span>
+                                    </div>
+                                </Link>
+                            )) : (
+                                <div className="text-center py-8 text-neutral-500 border border-dashed rounded-xl border-neutral-300">
+                                    No discussions yet. <Link href="/dashboard/community" className="text-blue-600 underline">Start one!</Link>
                                 </div>
-                            </Link>
-                        ))}
+                            )
+                        )}
                     </div>
                 </section>
 

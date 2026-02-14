@@ -31,7 +31,7 @@ export default function FarmerDashboardPage() {
                 <div className="relative z-10 max-w-3xl">
                     <div className="flex items-center gap-2 mb-2">
                         <span className="bg-emerald-500/30 text-emerald-100 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm border border-emerald-400/30">
-                            Smart Farming
+                            Farmer Dashboard
                         </span>
                     </div>
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
@@ -175,6 +175,6 @@ export default function FarmerDashboardPage() {
                 </div>
             </div>
 
-        </div>
+        </div >
     );
 }
