@@ -8,7 +8,7 @@ import Grainient from "@/components/Grainient";
 import GradualBlur from "@/components/GradualBlur";
 
 
-import { ChatWidget } from "@/components/landing/ChatWidget";
+
 
 export default function Home() {
   const lightGreenTheme = {
@@ -44,7 +44,6 @@ export default function Home() {
       <CommunitySection />
       <AboutSection />
       <Footer />
-      <ChatWidget />
     </div>
   );
 }
