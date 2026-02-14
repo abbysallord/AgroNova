@@ -221,7 +221,10 @@ export default function WeatherPage() {
                                 placeholder="e.g. Rice, Tomato, Cotton"
                                 value={crops}
                                 maxLength={50}
-                                onChange={(e) => setCrops(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value.replace(/[0-9]/g, "");
+                                    setCrops(val);
+                                }}
                                 className="h-12 px-4 shadow-sm"
                             />
                         </div>
