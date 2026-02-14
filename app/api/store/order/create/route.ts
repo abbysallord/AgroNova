@@ -80,7 +80,10 @@ export async function POST(req: Request) {
             });
 
             // B. Send Verification Request to Seller
-            const verifyLink = `http://localhost:3000/verify-order?orderId=${newOrder.id}`; // Generate verify link
+            // Dynamic Base URL from the request itself - zero config
+            const url = new URL(req.url);
+            const baseUrl = `${url.protocol}//${url.host}`;
+            const verifyLink = `${baseUrl}/verify-order?orderId=${newOrder.id}`;
             await transporter.sendMail({
                 from: '"AgriStore System" <' + process.env.EMAIL_USER + '>',
                 to: sellerEmail, // Real Seller
