@@ -101,13 +101,33 @@ export const SellProductModal = ({ isOpen, onClose, onListProduct, sellerProfile
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Product Name *</label>
-                            <Input value={newProduct.name} onChange={e => setNewProduct({ ...newProduct, name: e.target.value })} placeholder="e.g. Fresh Potatoes" />
+                            <div className="flex justify-between">
+                                <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Product Name *</label>
+                                <span className="text-[10px] text-neutral-400">{newProduct.name.length}/50</span>
+                            </div>
+                            <Input
+                                value={newProduct.name}
+                                onChange={e => setNewProduct({ ...newProduct, name: e.target.value.slice(0, 50) })}
+                                placeholder="e.g. Fresh Potatoes"
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Price (₹) *</label>
-                                <Input type="number" value={newProduct.price} onChange={e => setNewProduct({ ...newProduct, price: e.target.value })} placeholder="00" />
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={newProduct.price}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (Number(val) < 0) return;
+                                        setNewProduct({ ...newProduct, price: val })
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "-" || e.key === "e") e.preventDefault();
+                                    }}
+                                    placeholder="00"
+                                />
                             </div>
                             <div>
                                 <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Per Unit</label>
@@ -124,7 +144,20 @@ export const SellProductModal = ({ isOpen, onClose, onListProduct, sellerProfile
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Stock Available *</label>
-                                <Input type="number" value={newProduct.stock} onChange={e => setNewProduct({ ...newProduct, stock: e.target.value })} placeholder="e.g. 50" />
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={newProduct.stock}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (Number(val) < 0) return;
+                                        setNewProduct({ ...newProduct, stock: val })
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "-" || e.key === "e") e.preventDefault();
+                                    }}
+                                    placeholder="e.g. 50"
+                                />
                             </div>
                             <div>
                                 <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Category</label>
@@ -139,12 +172,15 @@ export const SellProductModal = ({ isOpen, onClose, onListProduct, sellerProfile
                         </div>
 
                         <div>
-                            <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Description *</label>
+                            <div className="flex justify-between">
+                                <label className="text-xs font-bold uppercase text-neutral-500 mb-1 block">Description *</label>
+                                <span className="text-[10px] text-neutral-400">{newProduct.description.length}/300</span>
+                            </div>
                             <textarea
                                 className="w-full h-24 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-transparent text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
                                 placeholder="Describe quality, origin, uses..."
                                 value={newProduct.description}
-                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value.slice(0, 300) })}
                             />
                         </div>
                     </div>
