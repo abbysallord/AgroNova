@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
-import { IconShoppingCart, IconPlus, IconBuildingStore, IconCheck, IconLoader, IconTrash, IconShieldCheck, IconEdit } from "@tabler/icons-react";
+import React, { useState, useEffect, Suspense } from "react";
+import { IconShoppingCart, IconPlus, IconBuildingStore, IconCheck, IconLoader, IconTrash, IconEdit } from "@tabler/icons-react";
 import Image from "next/image";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { cn } from "@/lib/utils";
@@ -38,7 +38,7 @@ interface SellerProfile {
     email: string;
 }
 
-export default function AgriStorePage() {
+function StoreContent() {
     const searchParams = useSearchParams();
     const initialSearch = searchParams.get("search") || "";
 
@@ -421,5 +421,13 @@ export default function AgriStorePage() {
             />
 
         </div>
+    );
+}
+
+export default function AgriStorePage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><IconLoader className="animate-spin" size={40} /></div>}>
+            <StoreContent />
+        </Suspense>
     );
 }
