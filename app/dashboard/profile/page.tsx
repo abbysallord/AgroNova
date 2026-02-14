@@ -57,8 +57,16 @@ export default function ProfilePage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
+        // 1. Validate File Type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            alert("Invalid file type. Please upload a JPEG, PNG, or WEBP image.");
+            return;
+        }
+
+        // 2. Validate File Size (2MB)
         if (file.size > 2 * 1024 * 1024) {
-            alert("File size must be less than 2MB");
+            alert("File size is too large. Please upload an image smaller than 2MB.");
             return;
         }
 
@@ -71,16 +79,19 @@ export default function ProfilePage() {
 
     const handleSave = async () => {
         setLoading(true);
-        // Simulate network delay
-        await new Promise(r => setTimeout(r, 800));
-
-        updateProfile({
-            ...formData,
-            avatar: avatarPreview || undefined
-        });
-
-        setLoading(false);
-        alert("Profile updated successfully!");
+        try {
+            // Await the update to ensure it completes before showing success
+            await updateProfile({
+                ...formData,
+                avatar: avatarPreview || undefined
+            });
+            alert("Profile updated successfully!");
+        } catch (error) {
+            console.error("Failed to update profile", error);
+            alert("Failed to update profile. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const initials = user?.name
