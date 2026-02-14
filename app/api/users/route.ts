@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbUsers } from "@/lib/db";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         let users = await dbUsers.getAll();
@@ -13,18 +15,17 @@ export async function GET() {
             { name: "Vikram Singh", email: "vikram@seeds.com", role: "Seed Supplier", status: "CLEAR", followers: [], following: [] },
         ] as any[];
 
-        // Ensure mocks exist in DB so they can be followed
-        for (const mock of mockUsers) {
-            await dbUsers.ensure(mock);
+        // Optimization: Only ensure mocks if they are missing from the fetched list
+        // and do it in parallel
+        const existingEmails = new Set(users.map((u: any) => u.email));
+        const missingMocks = mockUsers.filter(mock => !existingEmails.has(mock.email));
+
+        if (missingMocks.length > 0) {
+            await Promise.all(missingMocks.map(mock => dbUsers.ensure(mock)));
+            // Add them to the current list locally to avoid re-fetching
+            users = [...users, ...missingMocks.map(m => ({ ...m, id: "temp-id", strikes: [] }))];
+            // Ideally we'd re-fetch to get IDs but for display list it's fine, or we can just push them
         }
-
-        // Re-read to get latest with IDs/Strikes etc if relevant
-        users = await dbUsers.getAll();
-
-        // Combine real + mock (deduplicate by email if needed, but mock emails are fake)
-        // Since we ensured them, they ARE in `users` now! 
-        // So we just return `users`.
-        // But `users` might contain non-mock users too. That's fine.
 
         // Return only public info
         const safeUsers = users.map((u: any) => ({

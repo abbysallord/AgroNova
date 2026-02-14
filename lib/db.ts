@@ -480,6 +480,11 @@ export const dbSocial = {
             targetFollowers = [];
         }
 
+        console.log(`[Follow Logic] User: ${userEmail}, Target: ${targetEmail}`);
+        console.log(`[Follow Logic] User Following Before:`, userFollowing);
+        console.log(`[Follow Logic] Target Followers Before:`, targetFollowers);
+
+
         const isFollowing = userFollowing.includes(targetEmail);
 
         if (isFollowing) {

@@ -95,7 +95,7 @@ export default function CommunityPage() {
     };
 
     const fetchUsers = async () => {
-        try { const res = await fetch("/api/users"); setUsers(await res.json()); } catch (e) { }
+        try { const res = await fetch("/api/users", { cache: "no-store" }); setUsers(await res.json()); } catch (e) { }
     };
 
     const fetchMessages = async () => {
