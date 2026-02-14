@@ -17,10 +17,26 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { sender, receiver, content } = body;
+        const { sender, receiver, content, replyToId } = body;
 
-        const msg = await dbSocial.sendMessage(sender, receiver, content);
+        const msg = await dbSocial.sendMessage(sender, receiver, content, replyToId);
         return NextResponse.json(msg);
+    } catch (e: any) {
+        return NextResponse.json({ error: e.message }, { status: 500 });
+    }
+}
+
+
+export async function DELETE(req: Request) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const userEmail = searchParams.get("userEmail");
+        const targetEmail = searchParams.get("targetEmail");
+
+        if (!userEmail || !targetEmail) return NextResponse.json({ error: "Emails required" }, { status: 400 });
+
+        await dbSocial.deleteChat(userEmail, targetEmail);
+        return NextResponse.json({ success: true });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }

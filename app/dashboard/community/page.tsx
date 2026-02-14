@@ -69,6 +69,7 @@ export default function CommunityPage() {
 
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const isMutating = useRef(false); // Ref to track mutation state (send, edit, delete)
 
     useEffect(() => { setIsClient(true); }, []);
 
@@ -77,7 +78,7 @@ export default function CommunityPage() {
         fetchPosts();
         fetchUsers();
         pollingRef.current = setInterval(() => {
-            if (user && activeTab === "messages") fetchMessages();
+            if (user && activeTab === "messages" && !isMutating.current) fetchMessages();
         }, 3000);
         return () => { if (pollingRef.current) clearInterval(pollingRef.current); };
     }, [user, activeTab, isClient]);
@@ -234,6 +235,8 @@ export default function CommunityPage() {
 
     const handleSendMessage = async () => {
         if (!user || !selectedChatUser || !msgInput.trim()) return;
+        isMutating.current = true;
+
         const optimisticMsg: Message = {
             id: Date.now().toString(), sender: user.email, receiver: selectedChatUser, content: msgInput, timestamp: new Date().toISOString(), replyToId: replyTo?.id
         };
@@ -241,41 +244,70 @@ export default function CommunityPage() {
         setMsgInput("");
         setReplyTo(null);
         scrollToBottom();
-        await fetch("/api/messages", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sender: user.email, receiver: selectedChatUser, content: optimisticMsg.content, replyToId: optimisticMsg.replyToId })
-        });
-        fetchMessages(); // Sync
+
+        try {
+            await fetch("/api/messages", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ sender: user.email, receiver: selectedChatUser, content: optimisticMsg.content, replyToId: optimisticMsg.replyToId })
+            });
+        } finally {
+            isMutating.current = false;
+            fetchMessages(); // Sync
+        }
     };
 
     const handleMessageReaction = async (msgId: string, reaction: string) => {
         if (!user) return;
+        isMutating.current = true;
         setMessages(prev => prev.map(m => m.id === msgId ? { ...m, reaction: m.reaction === reaction ? undefined : reaction } : m));
-        await fetch(`/api/messages/${msgId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userEmail: user.email, reaction })
-        });
+        try {
+            await fetch(`/api/messages/${msgId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userEmail: user.email, reaction })
+            });
+        } finally {
+            isMutating.current = false;
+        }
     };
 
     const handleDeleteMessage = async (msgId: string) => {
         if (!user || !confirm("Delete this message?")) return;
+        isMutating.current = true;
         setMessages(prev => prev.filter(m => m.id !== msgId));
-        await fetch(`/api/messages/${msgId}?userEmail=${user.email}`, { method: "DELETE" });
+        try {
+            await fetch(`/api/messages/${msgId}?userEmail=${user.email}`, { method: "DELETE" });
+        } finally {
+            isMutating.current = false;
+            fetchMessages();
+        }
     };
 
     const handleEditMessage = async (msgId: string, content: string) => {
         if (!user) return;
+        isMutating.current = true;
         setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content, edited: true } : m));
         setEditingMsgId(null);
-        await fetch(`/api/messages/${msgId}`, {
-            method: "PATCH", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userEmail: user.email, content })
-        });
+        try {
+            await fetch(`/api/messages/${msgId}`, {
+                method: "PATCH", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userEmail: user.email, content })
+            });
+        } finally {
+            isMutating.current = false;
+            fetchMessages();
+        }
     };
 
     const handleDeleteChat = async () => {
-        if (!confirm("Are you sure you want to delete this entire conversation?")) return;
-        setMessages(prev => prev.filter(m => !((m.sender === user?.email && m.receiver === selectedChatUser) || (m.sender === selectedChatUser && m.receiver === user?.email))));
+        if (!user || !selectedChatUser || !confirm("Are you sure you want to delete this entire conversation?")) return;
+        isMutating.current = true;
+        setMessages(prev => prev.filter(m => !((m.sender === user.email && m.receiver === selectedChatUser) || (m.sender === selectedChatUser && m.receiver === user.email))));
+        try {
+            await fetch(`/api/messages?userEmail=${user.email}&targetEmail=${selectedChatUser}`, { method: "DELETE" });
+        } finally {
+            isMutating.current = false;
+            fetchMessages();
+        }
     };
 
     // --- Network Filter Logic ---
@@ -475,7 +507,7 @@ export default function CommunityPage() {
                                                             userAvatar={msg.sender === user?.email ? user?.avatar : users.find(u => u.email === msg.sender)?.avatar}
                                                             userName={msg.sender === user?.email ? user?.name : users.find(u => u.email === msg.sender)?.name}
                                                             replyContent={msg.replyToId ? messages.find(m => m.id === msg.replyToId)?.content : undefined}
-                                                            onReply={() => setReplyTo(msg)}
+                                                            onReply={() => { setReplyTo(msg); document.getElementById("chat-input")?.focus(); }}
                                                             onReact={(r: string) => handleMessageReaction(msg.id, r)}
                                                             onDelete={() => handleDeleteMessage(msg.id)}
                                                             onEdit={(content: string) => handleEditMessage(msg.id, content)}
@@ -494,6 +526,7 @@ export default function CommunityPage() {
                                                 )}
                                                 <div className="flex gap-2">
                                                     <input
+                                                        id="chat-input"
                                                         value={msgInput} onChange={e => setMsgInput(e.target.value)}
                                                         onKeyDown={e => e.key === "Enter" && handleSendMessage()}
                                                         placeholder="Type your message..."
@@ -735,6 +768,7 @@ function UserCard({ user, onFollow, currentUser, onChat }: any) {
 
 function MessageBubble({ message, isMe, userAvatar, userName, onReply, replyContent, onReact, onDelete, onEdit, isEditing, setEditingMsgId }: any) {
     const [editContent, setEditContent] = useState(message.content);
+    const [showMenu, setShowMenu] = useState(false);
 
     return (
         <div className={`flex gap-2 ${isMe ? "justify-end" : "justify-start"} mb-1`}>
@@ -749,36 +783,49 @@ function MessageBubble({ message, isMe, userAvatar, userName, onReply, replyCont
             )}
             <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} relative group max-w-[75%]`}>
                 {replyContent && <div className={`text-xs text-gray-400 mb-1 px-2 border-l-2 ${isMe ? "border-green-500/50 text-right pr-2" : "border-gray-300 pl-2"}`}>Replying to: {replyContent.substring(0, 30)}...</div>}
-                <div className={`relative group/bubble w-full`}>
-                    {!isEditing && (
-                        <div className={`absolute -top-8 ${isMe ? "right-0" : "left-0"} hidden group-hover/bubble:flex items-center gap-1 bg-white dark:bg-neutral-800 shadow-md border border-gray-200 dark:border-neutral-700 rounded-full px-2 py-1 z-10`}>
-                            <button onClick={onReply} className="p-1 text-gray-500 hover:text-green-600" title="Reply"><IconArrowBackUp size={14} /></button>
-                            <div className="flex items-center border-l border-r border-gray-200 dark:border-neutral-700 mx-1 px-1 gap-1">
-                                {["👍", "❤️", "😂"].map(r => <button key={r} onClick={() => onReact(r)} className="hover:scale-125 transition-transform">{r}</button>)}
+
+                <div className={`relative flex items-center gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                    <div className={`relative group/bubble w-full`}>
+                        {isEditing ? (
+                            <div className="flex gap-2 items-center bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
+                                <input value={editContent} onChange={e => setEditContent(e.target.value)} className="bg-transparent border-none focus:outline-none text-sm w-full min-w-[200px]" autoFocus onKeyDown={e => { if (e.key === "Enter") onEdit(editContent); }} />
+                                <button onClick={() => setEditingMsgId(null)} className="text-gray-400 hover:text-red-500"><IconX size={14} /></button>
+                                <button onClick={() => onEdit(editContent)} className="text-green-600 hover:text-green-700"><IconCheck size={14} /></button>
                             </div>
-                            {isMe && (
+                        ) : (
+                            <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-sm border relative ${isMe ? "bg-green-600 text-white border-green-600 rounded-br-none" : "bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-neutral-700 rounded-bl-none"}`}>
+                                {message.content}
+                                <div className={`text-[10px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? "text-green-100" : "text-gray-400"}`}>
+                                    {message.edited && <span>(edited)</span>}
+                                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                                {message.reaction && <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm`}>{message.reaction}</div>}
+                            </div>
+                        )}
+                    </div>
+
+                    {!isEditing && (
+                        <div className="relative">
+                            <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">
+                                <IconDots size={16} />
+                            </button>
+                            {showMenu && (
                                 <>
-                                    <button onClick={() => { setEditingMsgId(message.id); setEditContent(message.content); }} className="p-1 text-gray-500 hover:text-blue-500" title="Edit"><IconEdit size={14} /></button>
-                                    <button onClick={onDelete} className="p-1 text-gray-500 hover:text-red-500" title="Delete"><IconTrash size={14} /></button>
+                                    <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                                    <div className={`absolute bottom-full ${isMe ? "right-0" : "left-0"} mb-2 flex items-center gap-1 bg-white dark:bg-neutral-800 shadow-lg border border-gray-200 dark:border-neutral-700 rounded-full px-2 py-1 z-20 whitespace-nowrap`}>
+                                        <button onClick={() => { onReply(); setShowMenu(false); }} className="p-1.5 text-gray-500 hover:text-green-600 transition-colors" title="Reply"><IconArrowBackUp size={16} /></button>
+                                        <div className="w-px h-4 bg-gray-200 dark:bg-neutral-700 mx-1" />
+                                        {["👍", "❤️", "😂"].map(r => <button key={r} onClick={() => { onReact(r); setShowMenu(false); }} className="hover:scale-125 transition-transform p-1">{r}</button>)}
+                                        {isMe && (
+                                            <>
+                                                <div className="w-px h-4 bg-gray-200 dark:bg-neutral-700 mx-1" />
+                                                <button onClick={() => { setEditingMsgId(message.id); setEditContent(message.content); setShowMenu(false); }} className="p-1.5 text-gray-500 hover:text-blue-500 transition-colors" title="Edit"><IconEdit size={16} /></button>
+                                                <button onClick={() => { setShowMenu(false); onDelete(); }} className="p-1.5 text-gray-500 hover:text-red-500 transition-colors" title="Delete"><IconTrash size={16} /></button>
+                                            </>
+                                        )}
+                                    </div>
                                 </>
                             )}
-                        </div>
-                    )}
-
-                    {isEditing ? (
-                        <div className="flex gap-2 items-center bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
-                            <input value={editContent} onChange={e => setEditContent(e.target.value)} className="bg-transparent border-none focus:outline-none text-sm w-full min-w-[200px]" autoFocus onKeyDown={e => { if (e.key === "Enter") onEdit(editContent); }} />
-                            <button onClick={() => setEditingMsgId(null)} className="text-gray-400 hover:text-red-500"><IconX size={14} /></button>
-                            <button onClick={() => onEdit(editContent)} className="text-green-600 hover:text-green-700"><IconCheck size={14} /></button>
-                        </div>
-                    ) : (
-                        <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-sm border relative ${isMe ? "bg-green-600 text-white border-green-600 rounded-br-none" : "bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-neutral-700 rounded-bl-none"}`}>
-                            {message.content}
-                            <div className={`text-[10px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? "text-green-100" : "text-gray-400"}`}>
-                                {message.edited && <span>(edited)</span>}
-                                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                            {message.reaction && <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm`}>{message.reaction}</div>}
                         </div>
                     )}
                 </div>

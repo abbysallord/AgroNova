@@ -619,5 +619,17 @@ export const dbSocial = {
             timestamp: updated.timestamp.toISOString(),
             reactions: updated.reactions ? JSON.parse(updated.reactions) : {}
         };
+    },
+
+    deleteChat: async (userEmail: string, targetEmail: string) => {
+        await prisma.message.deleteMany({
+            where: {
+                OR: [
+                    { senderEmail: userEmail, receiverEmail: targetEmail },
+                    { receiverEmail: userEmail, senderEmail: targetEmail }
+                ]
+            }
+        });
+        return true;
     }
 };
