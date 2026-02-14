@@ -36,7 +36,7 @@ interface Message {
     replyToId?: string;
     edited?: boolean;
 }
-interface SocialUser { name: string; email: string; role: string; followers: string[]; following: string[]; }
+interface SocialUser { name: string; email: string; role: string; followers: string[]; following: string[]; avatar?: string | null; }
 
 export default function CommunityPage() {
     const { user } = useAuth();
@@ -104,7 +104,20 @@ export default function CommunityPage() {
 
     const fetchMessages = async () => {
         if (!user) return;
-        try { const res = await fetch(`/api/messages?email=${user.email}`); setMessages(await res.json()); } catch (e) { }
+
+        // Load from local storage first for instant feedback if empty state
+        if (messages.length === 0) {
+            const cached = localStorage.getItem(`chat_msgs_${user.email}`);
+            if (cached) setMessages(JSON.parse(cached));
+        }
+
+        try {
+            const res = await fetch(`/api/messages?email=${user.email}`);
+            const newMsgs = await res.json();
+            setMessages(newMsgs);
+            // Save to local storage for persistence "so we won't have to handle it" (client side cache)
+            localStorage.setItem(`chat_msgs_${user.email}`, JSON.stringify(newMsgs));
+        } catch (e) { }
     };
 
     // --- Actions ---
@@ -403,19 +416,39 @@ export default function CommunityPage() {
                                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Messages</h2>
                                     </div>
                                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                                        {users.filter(u => u.email !== user?.email).map(u => (
-                                            <button key={u.email} onClick={() => setSelectedChatUser(u.email)}
-                                                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${selectedChatUser === u.email ? "bg-green-100 dark:bg-neutral-800 text-green-900 dark:text-white" : "hover:bg-gray-100 dark:hover:bg-neutral-800"}`}
-                                            >
-                                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300">
-                                                    {u.name[0]}
-                                                </div>
-                                                <div className="flex-1 text-left">
-                                                    <div className="font-medium text-gray-900 dark:text-white">{u.name}</div>
-                                                    <div className="text-xs text-gray-500 capitalize">{u.role}</div>
-                                                </div>
-                                            </button>
-                                        ))}
+                                        {users.filter(u => {
+                                            if (u.email === user?.email) return false;
+                                            const isFollowing = u.followers.includes(user?.email || "");
+                                            const isFollower = u.following.includes(user?.email || "");
+                                            return isFollowing && isFollower;
+                                        }).length === 0 ? (
+                                            <div className="p-4 text-center text-gray-500 text-sm">
+                                                Follow users back to start chatting!
+                                            </div>
+                                        ) : (
+                                            users.filter(u => {
+                                                if (u.email === user?.email) return false;
+                                                const isFollowing = u.followers.includes(user?.email || "");
+                                                const isFollower = u.following.includes(user?.email || "");
+                                                return isFollowing && isFollower;
+                                            }).map(u => (
+                                                <button key={u.email} onClick={() => setSelectedChatUser(u.email)}
+                                                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${selectedChatUser === u.email ? "bg-green-100 dark:bg-neutral-800 text-green-900 dark:text-white" : "hover:bg-gray-100 dark:hover:bg-neutral-800"}`}
+                                                >
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-sm font-bold text-gray-600 dark:text-gray-300 shrink-0 overflow-hidden relative">
+                                                        {u.avatar ? (
+                                                            <Image src={u.avatar} alt={u.name} fill className="object-cover" />
+                                                        ) : (
+                                                            u.name[0]
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 text-left">
+                                                        <div className="font-medium text-gray-900 dark:text-white">{u.name}</div>
+                                                        <div className="text-xs text-gray-500 capitalize">{u.role}</div>
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
 
@@ -427,7 +460,7 @@ export default function CommunityPage() {
                                                     <button onClick={() => setSelectedChatUser(null)} className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-neutral-800 rounded-full"><IconArrowBackUp size={20} /></button>
                                                     <div className="flex flex-col">
                                                         <span className="font-semibold text-gray-900 dark:text-white">{users.find(u => u.email === selectedChatUser)?.name || selectedChatUser}</span>
-                                                        <span className="text-xs text-green-600 flex items-center gap-1">Online</span>
+
                                                     </div>
                                                 </div>
                                                 <button onClick={handleDeleteChat} className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800" title="Delete Chat">
@@ -439,6 +472,8 @@ export default function CommunityPage() {
                                                     .map(msg => (
                                                         <MessageBubble
                                                             key={msg.id} message={msg} isMe={msg.sender === user?.email}
+                                                            userAvatar={msg.sender === user?.email ? user?.avatar : users.find(u => u.email === msg.sender)?.avatar}
+                                                            userName={msg.sender === user?.email ? user?.name : users.find(u => u.email === msg.sender)?.name}
                                                             replyContent={msg.replyToId ? messages.find(m => m.id === msg.replyToId)?.content : undefined}
                                                             onReply={() => setReplyTo(msg)}
                                                             onReact={(r: string) => handleMessageReaction(msg.id, r)}
@@ -675,7 +710,13 @@ function UserCard({ user, onFollow, currentUser, onChat }: any) {
     const isFollowing = user.followers.includes(currentUser?.email || "");
     return (
         <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl p-6 flex flex-col items-center gap-4 hover:shadow-lg transition-shadow">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-xl font-bold text-gray-600 dark:text-gray-300">{user.name[0]}</div>
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-neutral-800 flex items-center justify-center text-xl font-bold text-gray-600 dark:text-gray-300 shrink-0 overflow-hidden relative">
+                {user.avatar ? (
+                    <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+                ) : (
+                    user.name[0]
+                )}
+            </div>
             <div className="text-center">
                 <h3 className="font-bold text-lg text-gray-900 dark:text-white">{user.name}</h3>
                 <p className="text-xs text-gray-500 uppercase tracking-widest mt-1">{user.role}</p>
@@ -692,44 +733,55 @@ function UserCard({ user, onFollow, currentUser, onChat }: any) {
     );
 }
 
-function MessageBubble({ message, isMe, onReply, replyContent, onReact, onDelete, onEdit, isEditing, setEditingMsgId }: any) {
+function MessageBubble({ message, isMe, userAvatar, userName, onReply, replyContent, onReact, onDelete, onEdit, isEditing, setEditingMsgId }: any) {
     const [editContent, setEditContent] = useState(message.content);
 
     return (
-        <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} relative group`}>
-            {replyContent && <div className={`text-xs text-gray-400 mb-1 px-2 border-l-2 ${isMe ? "border-green-500/50 text-right pr-2" : "border-gray-300 pl-2"}`}>Replying to: {replyContent.substring(0, 30)}...</div>}
-            <div className={`max-w-[80%] relative group/bubble w-full md:w-auto`}>
-                {!isEditing && (
-                    <div className={`absolute -top-8 ${isMe ? "right-0" : "left-0"} hidden group-hover/bubble:flex items-center gap-1 bg-white dark:bg-neutral-800 shadow-md border border-gray-200 dark:border-neutral-700 rounded-full px-2 py-1 z-10`}>
-                        <button onClick={onReply} className="p-1 text-gray-500 hover:text-green-600" title="Reply"><IconArrowBackUp size={14} /></button>
-                        <div className="flex items-center border-l border-r border-gray-200 dark:border-neutral-700 mx-1 px-1 gap-1">
-                            {["👍", "❤️", "😂"].map(r => <button key={r} onClick={() => onReact(r)} className="hover:scale-125 transition-transform">{r}</button>)}
+        <div className={`flex gap-2 ${isMe ? "justify-end" : "justify-start"} mb-1`}>
+            {!isMe && (
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-neutral-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 shrink-0 overflow-hidden relative self-end mb-1">
+                    {userAvatar ? (
+                        <Image src={userAvatar} alt={userName || "User"} fill className="object-cover" />
+                    ) : (
+                        userName?.[0] || "?"
+                    )}
+                </div>
+            )}
+            <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} relative group max-w-[75%]`}>
+                {replyContent && <div className={`text-xs text-gray-400 mb-1 px-2 border-l-2 ${isMe ? "border-green-500/50 text-right pr-2" : "border-gray-300 pl-2"}`}>Replying to: {replyContent.substring(0, 30)}...</div>}
+                <div className={`relative group/bubble w-full`}>
+                    {!isEditing && (
+                        <div className={`absolute -top-8 ${isMe ? "right-0" : "left-0"} hidden group-hover/bubble:flex items-center gap-1 bg-white dark:bg-neutral-800 shadow-md border border-gray-200 dark:border-neutral-700 rounded-full px-2 py-1 z-10`}>
+                            <button onClick={onReply} className="p-1 text-gray-500 hover:text-green-600" title="Reply"><IconArrowBackUp size={14} /></button>
+                            <div className="flex items-center border-l border-r border-gray-200 dark:border-neutral-700 mx-1 px-1 gap-1">
+                                {["👍", "❤️", "😂"].map(r => <button key={r} onClick={() => onReact(r)} className="hover:scale-125 transition-transform">{r}</button>)}
+                            </div>
+                            {isMe && (
+                                <>
+                                    <button onClick={() => { setEditingMsgId(message.id); setEditContent(message.content); }} className="p-1 text-gray-500 hover:text-blue-500" title="Edit"><IconEdit size={14} /></button>
+                                    <button onClick={onDelete} className="p-1 text-gray-500 hover:text-red-500" title="Delete"><IconTrash size={14} /></button>
+                                </>
+                            )}
                         </div>
-                        {isMe && (
-                            <>
-                                <button onClick={() => { setEditingMsgId(message.id); setEditContent(message.content); }} className="p-1 text-gray-500 hover:text-blue-500" title="Edit"><IconEdit size={14} /></button>
-                                <button onClick={onDelete} className="p-1 text-gray-500 hover:text-red-500" title="Delete"><IconTrash size={14} /></button>
-                            </>
-                        )}
-                    </div>
-                )}
+                    )}
 
-                {isEditing ? (
-                    <div className="flex gap-2 items-center bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
-                        <input value={editContent} onChange={e => setEditContent(e.target.value)} className="bg-transparent border-none focus:outline-none text-sm w-full min-w-[200px]" autoFocus onKeyDown={e => { if (e.key === "Enter") onEdit(editContent); }} />
-                        <button onClick={() => setEditingMsgId(null)} className="text-gray-400 hover:text-red-500"><IconX size={14} /></button>
-                        <button onClick={() => onEdit(editContent)} className="text-green-600 hover:text-green-700"><IconCheck size={14} /></button>
-                    </div>
-                ) : (
-                    <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-sm border relative ${isMe ? "bg-green-600 text-white border-green-600 rounded-br-none" : "bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-neutral-700 rounded-bl-none"}`}>
-                        {message.content}
-                        <div className={`text-[10px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? "text-green-100" : "text-gray-400"}`}>
-                            {message.edited && <span>(edited)</span>}
-                            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {isEditing ? (
+                        <div className="flex gap-2 items-center bg-white dark:bg-neutral-800 p-2 rounded-xl border border-gray-200 dark:border-neutral-700 shadow-sm">
+                            <input value={editContent} onChange={e => setEditContent(e.target.value)} className="bg-transparent border-none focus:outline-none text-sm w-full min-w-[200px]" autoFocus onKeyDown={e => { if (e.key === "Enter") onEdit(editContent); }} />
+                            <button onClick={() => setEditingMsgId(null)} className="text-gray-400 hover:text-red-500"><IconX size={14} /></button>
+                            <button onClick={() => onEdit(editContent)} className="text-green-600 hover:text-green-700"><IconCheck size={14} /></button>
                         </div>
-                        {message.reaction && <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm`}>{message.reaction}</div>}
-                    </div>
-                )}
+                    ) : (
+                        <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-sm border relative ${isMe ? "bg-green-600 text-white border-green-600 rounded-br-none" : "bg-white dark:bg-neutral-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-neutral-700 rounded-bl-none"}`}>
+                            {message.content}
+                            <div className={`text-[10px] mt-1 text-right flex items-center justify-end gap-1 ${isMe ? "text-green-100" : "text-gray-400"}`}>
+                                {message.edited && <span>(edited)</span>}
+                                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            {message.reaction && <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm`}>{message.reaction}</div>}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

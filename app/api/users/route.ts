@@ -34,7 +34,8 @@ export async function GET() {
             role: u.role || "Farmer",
             status: u.status,
             followers: u.followers || [],
-            following: u.following || []
+            following: u.following || [],
+            avatar: u.avatar || null
         }));
         return NextResponse.json(safeUsers);
     } catch (e: any) {

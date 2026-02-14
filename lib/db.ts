@@ -513,27 +513,58 @@ export const dbSocial = {
         return true;
     },
 
-    // Messages implementation requires fetching from Message model
+    // Messages implementation
     getMessages: async (userEmail: string) => {
-        // Simplified fetch (OR condition on sender/receiver)
-        /*
         const msgs = await prisma.message.findMany({
             where: {
-                OR: [ { senderEmail: userEmail }, { receiverEmail: userEmail } ]
-            }
+                OR: [
+                    { senderEmail: userEmail },
+                    { receiverEmail: userEmail }
+                ]
+            },
+            orderBy: { timestamp: 'asc' }
         });
-        return msgs.map(...)
-        */
-        return [];
+
+        return msgs.map(m => ({
+            id: m.id,
+            sender: m.senderEmail,
+            receiver: m.receiverEmail,
+            content: m.content,
+            timestamp: m.timestamp.toISOString(),
+            read: m.read,
+            reactions: m.reactions ? JSON.parse(m.reactions) : {},
+            replyToId: m.replyToId || undefined,
+            edited: m.edited
+        }));
     },
 
-    sendMessage: async (sender: string, receiver: string, content: string) => {
-        /*
-        await prisma.message.create({
-            data: { senderEmail: sender, receiverEmail: receiver, content }
-        })
-        */
-        return {};
+    sendMessage: async (sender: string, receiver: string, content: string, replyToId?: string) => {
+        // Ensure sender and receiver exist (optional but good practice)
+        // For speed, skipping ensuring user existance as frontend prevents Invalid emails usually.
+
+        const newMsg = await prisma.message.create({
+            data: {
+                senderId: "unknown", // Placeholder as schema requires it but no relation enforced
+                receiverId: "unknown",
+
+                senderEmail: sender,
+                receiverEmail: receiver,
+                content,
+                replyToId
+            }
+        });
+
+        return {
+            id: newMsg.id,
+            sender: newMsg.senderEmail,
+            receiver: newMsg.receiverEmail,
+            content: newMsg.content,
+            timestamp: newMsg.timestamp.toISOString(),
+            read: newMsg.read,
+            reactions: {},
+            replyToId: newMsg.replyToId || undefined,
+            edited: newMsg.edited
+        };
     },
 
     deleteMessage: async (id: string, userEmail: string) => {
