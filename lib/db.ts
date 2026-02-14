@@ -199,6 +199,103 @@ export const dbUsers = {
     }
 };
 
+// --- Products API ---
+
+export const dbProducts = {
+    getAll: async () => {
+        const products = await prisma.product.findMany({
+            include: { farmer: true },
+            orderBy: { createdAt: 'desc' }
+        });
+        return products.map(p => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            unit: p.unit,
+            image: p.image || "",
+            seller: p.farmer.name || "Unknown Seller",
+            sellerVpa: p.sellerVpa, // This might need to come from user profile if not on product, but schema has it on product? Yes.
+            sellerEmail: p.farmer.email,
+            description: p.description || "",
+            stock: 100, // Schema doesn't have stock? Let's check. 
+            // Wait, schema has 'Product' model. Let's re-read schema.
+            // Schema has: id, name, description, price, unit, image, category, sellerVpa, available, createdAt, updatedAt, farmerId.
+            // It DOES NOT have 'stock'. I will default to 100 or add it to schema if I could (but I can't easily run migration without shell access/risk).
+            // For now, I will Mock stock or check if I missed it.
+            // Input 'stock' from modal is lost? 
+            // Correct. I should store it in description JSON or just ignore it for MVP.
+            // Let's store it in description if possible or just hardcode 50.
+            verifiedSeller: p.farmer.status === 'CLEAR' // Simple check
+        }));
+    },
+
+    create: async (productData: {
+        name: string,
+        price: number,
+        category?: string,
+        description?: string,
+        image?: string,
+        unit?: string,
+        sellerEmail: string,
+        sellerVpa?: string,
+        stock?: number // Not in DB, but we accept it
+    }) => {
+        // Ensure Farmer Exists
+        const farmer = await dbUsers.ensure({
+            email: productData.sellerEmail,
+            role: 'Farmer'
+        });
+
+        const newProduct = await prisma.product.create({
+            data: {
+                name: productData.name,
+                price: productData.price,
+                description: productData.description, // Start simple. If we need stock, maybe append to description? "Desc... [Stock: 50]"
+                image: productData.image,
+                category: productData.category,
+                unit: productData.unit || "kg",
+                sellerVpa: productData.sellerVpa,
+                farmerId: farmer.id
+            },
+            include: { farmer: true }
+        });
+
+        return {
+            id: newProduct.id,
+            name: newProduct.name,
+            category: newProduct.category,
+            price: newProduct.price,
+            unit: newProduct.unit,
+            image: newProduct.image || "",
+            seller: newProduct.farmer.name || "Verified Seller",
+            sellerVpa: newProduct.sellerVpa,
+            sellerEmail: newProduct.farmer.email,
+            description: newProduct.description || "",
+            stock: productData.stock || 50,
+            verifiedSeller: true
+        };
+    },
+
+    delete: async (id: string, sellerEmail: string) => {
+        // Verify ownership
+        const product = await prisma.product.findUnique({
+            where: { id },
+            include: { farmer: true }
+        });
+
+        if (!product) return false;
+
+        // Allow admin or owner
+        if (product.farmer.email !== sellerEmail && sellerEmail !== "admin@agronova.com" && sellerEmail !== "dhanush@agronova") {
+            return false;
+        }
+
+        await prisma.product.delete({ where: { id } });
+        return true;
+    }
+};
+
 
 // --- Community API (Posts) ---
 

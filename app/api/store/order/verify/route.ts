@@ -93,6 +93,14 @@ export async function POST(req: Request) {
                 html: EmailTemplate.SellerSuccess(order.id, order.shippingAddress)
             });
 
+            // Send Confirmation Email to Buyer
+            await transporter.sendMail({
+                from: '"AgriStore" <' + process.env.EMAIL_USER + '>',
+                to: order.buyerEmail,
+                subject: `Order Confirmed: ${order.id}`,
+                html: EmailTemplate.BuyerSuccess(order.id, orderSellerEmail)
+            });
+
             return NextResponse.json({ success: true, status: 'VERIFIED' });
         }
         else if (action === 'REJECT') {

@@ -20,6 +20,7 @@ interface Product {
     image: string;
     seller: string;
     sellerVpa?: string;
+    sellerEmail?: string;
     description: string;
     stock: number;
     verifiedSeller: boolean;

@@ -58,7 +58,16 @@ export const EmailTemplate = {
             <p>This order has been cancelled.</p>
             <p>If you believe this is an error, please reply to this email immediately with your payment proof (Screenshot/UTR).</p>
         </div>
+    `,
 
+    BuyerSuccess: (orderId: string, sellerName: string) => `
+        <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h1 style="color: #16a34a;">Order Confirmed!</h1>
+            <p>Hi there,</p>
+            <p>Good news! <strong>${sellerName}</strong> has verified your payment for Order <strong>#${orderId}</strong>.</p>
+            <p>Your items will be shipped shortly.</p>
+            <p>Thank you for shopping with AgroNova.</p>
+        </div>
     `,
 
     ResetPassword: (resetLink: string) => `
