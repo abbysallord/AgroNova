@@ -10,7 +10,8 @@ import {
     IconFlask,
     IconNews,
     IconArrowRight,
-    IconSun
+    IconSun,
+    IconUsers
 } from "@tabler/icons-react";
 import { useAuth } from "@/context/AuthContext";
 import { WeatherWidget } from "@/components/dashboard/widgets/WeatherWidget";
@@ -145,17 +146,33 @@ export default function FarmerDashboardPage() {
                 </section>
             </div>
 
-            {/* 4. Quick Actions / Schemes */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-3xl p-8 border border-blue-100 dark:border-blue-800/50 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                    <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">Government Schemes & Subsidies</h3>
-                    <p className="text-neutral-600 dark:text-neutral-400 max-w-xl">
-                        Stay updated with the latest financial aid, loan waivers, and subsidies available for farmers in your region.
-                    </p>
+            {/* 4. Quick Actions / Community */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Schemes Card */}
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-3xl p-8 border border-blue-100 dark:border-blue-800/50 flex flex-col justify-between h-full">
+                    <div>
+                        <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">Government Schemes</h3>
+                        <p className="text-neutral-600 dark:text-neutral-400 max-w-sm mb-6">
+                            Stay updated with the latest financial aid, loan waivers, and subsidies available for farmers in your region.
+                        </p>
+                    </div>
+                    <Link href="/dashboard/schemes" className="w-fit bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all whitespace-nowrap flex items-center gap-2">
+                        Explore Schemes <IconArrowRight size={18} />
+                    </Link>
                 </div>
-                <Link href="/dashboard/schemes" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 transition-all whitespace-nowrap">
-                    Explore Schemes
-                </Link>
+
+                {/* Community Card */}
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-3xl p-8 border border-purple-100 dark:border-purple-800/50 flex flex-col justify-between h-full">
+                    <div>
+                        <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-2">Farmer Community</h3>
+                        <p className="text-neutral-600 dark:text-neutral-400 max-w-sm mb-6">
+                            Connect with other farmers, share tips, ask experts, and discuss market trends in our vibrant community.
+                        </p>
+                    </div>
+                    <Link href="/dashboard/community" className="w-fit bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-purple-500/30 transition-all whitespace-nowrap flex items-center gap-2">
+                        Join Discussion <IconUsers className="ml-1" size={18} />
+                    </Link>
+                </div>
             </div>
 
         </div>
