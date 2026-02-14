@@ -462,8 +462,49 @@ export const dbPosts = {
 
 export const dbSocial = {
     toggleFollow: async (userEmail: string, targetEmail: string) => {
-        // This requires updating BOTH users' followers/following arrays
-        // Implementation logic similar to original but with Prisma updates
+        const user = await prisma.user.findUnique({ where: { email: userEmail } });
+        const target = await prisma.user.findUnique({ where: { email: targetEmail } });
+
+        if (!user || !target) return false;
+
+        let userFollowing: string[] = [];
+        let targetFollowers: string[] = [];
+
+        try {
+            userFollowing = user.following ? JSON.parse(user.following) : [];
+            targetFollowers = target.followers ? JSON.parse(target.followers) : [];
+        } catch (e) {
+            console.error("JSON Parse Error in Follow:", e);
+            // reset if corrupted
+            userFollowing = [];
+            targetFollowers = [];
+        }
+
+        const isFollowing = userFollowing.includes(targetEmail);
+
+        if (isFollowing) {
+            // Unfollow
+            userFollowing = userFollowing.filter(e => e !== targetEmail);
+            targetFollowers = targetFollowers.filter(e => e !== userEmail);
+        } else {
+            // Follow
+            userFollowing.push(targetEmail);
+            // Prevent duplicate if logic glitch
+            if (!targetFollowers.includes(userEmail)) targetFollowers.push(userEmail);
+        }
+
+        // Update DB
+        // We do this sequentially. In real app, explicit transaction is better but this is fine.
+        await prisma.user.update({
+            where: { email: userEmail },
+            data: { following: JSON.stringify(userFollowing) }
+        });
+
+        await prisma.user.update({
+            where: { email: targetEmail },
+            data: { followers: JSON.stringify(targetFollowers) }
+        });
+
         return true;
     },
 
