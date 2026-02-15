@@ -89,6 +89,34 @@ export default function CommunityPage() {
 
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
+    // Handle Voiceflow Widget Visibility
+    useEffect(() => {
+        if (!isClient) return;
+
+        const toggleVoiceflow = () => {
+            const vf = (window as any).voiceflow?.chat;
+            if (vf) {
+                if (activeTab === "messages") {
+                    vf.hide();
+                } else {
+                    vf.show();
+                }
+            }
+        };
+
+        // Try immediately
+        toggleVoiceflow();
+
+        // And set a small timeout in case it's loading
+        const timer = setTimeout(toggleVoiceflow, 1000);
+
+        return () => {
+            clearTimeout(timer);
+            const vf = (window as any).voiceflow?.chat;
+            if (vf) vf.show();
+        };
+    }, [activeTab, isClient]);
+
     // --- API Calls ---
     const fetchPosts = async () => {
         setLoadingPosts(true);
@@ -710,7 +738,7 @@ function PostCard({ post, user, onLike, onDelete, onComment, onDeleteComment, on
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-[10px] text-gray-400">{new Date(comment.date).toLocaleDateString()}</span>
                                                             {user?.email === comment.userEmail && (
-                                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                                                     <button onClick={() => { setEditingCommentId(comment.id); setEditCommentText(comment.text); }} className="text-[10px] text-gray-400 hover:text-blue-500"><IconEdit size={12} /></button>
                                                                     <button onClick={() => onDeleteComment(post.id, comment.id)} className="text-[10px] text-red-500 hover:text-red-700"><IconTrash size={12} /></button>
                                                                 </div>

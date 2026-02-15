@@ -302,6 +302,7 @@ export const dbProducts = {
 export const dbPosts = {
     getAll: async () => {
         const posts = await prisma.post.findMany({
+            take: 50,
             include: { user: true, comments: { include: { user: true } } },
             orderBy: { date: 'desc' }
         });
