@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { Mistral } from "@mistralai/mistralai";
 import { NextResponse } from "next/server";
 
 import { checkAiRateLimit } from "@/lib/ai-rate-limit";
@@ -14,8 +14,8 @@ export async function POST(req: Request) {
 
     const { crops, weatherData } = await req.json();
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json({ error: "OPENAI_API_KEY not configured" }, { status: 500 });
+    if (!process.env.MISTRAL_API_KEY) {
+      return NextResponse.json({ error: "MISTRAL_API_KEY not configured" }, { status: 500 });
     }
 
     // Format weather data for better AI understanding
@@ -32,8 +32,8 @@ export async function POST(req: Request) {
       });
     }
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+    const mistral = new Mistral({
+      apiKey: process.env.MISTRAL_API_KEY,
     });
 
     const prompt = `
@@ -57,10 +57,10 @@ export async function POST(req: Request) {
     Keep the tone professional yet simple for a farmer.
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await mistral.chat.complete({
+      model: "mistral-large-latest",
       messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
+      responseFormat: { type: "json_object" },
     });
 
     const content = response.choices?.[0]?.message?.content;

@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { Mistral } from "@mistralai/mistralai";
 import { NextResponse } from "next/server";
 
 import { checkAiRateLimit } from "@/lib/ai-rate-limit";
@@ -15,13 +15,13 @@ export async function POST(req: Request) {
         const formData = await req.formData();
         const type = formData.get("type") as string; // 'manual' or 'image'
 
-        if (!process.env.OPENAI_API_KEY) {
-            console.error("OPENAI_API_KEY is missing");
+        if (!process.env.MISTRAL_API_KEY) {
+            console.error("MISTRAL_API_KEY is missing");
             return NextResponse.json({ error: "Server configuration error: Missing API Key" }, { status: 500 });
         }
 
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
+        const mistral = new Mistral({
+            apiKey: process.env.MISTRAL_API_KEY,
         });
 
         let prompt = "";
@@ -71,12 +71,12 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid analysis type" }, { status: 400 });
         }
 
-        console.log("[Soil Analysis] Sending request to OpenAI...");
+        console.log("[Soil Analysis] Sending request to Mistral...");
 
-        const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+        const response = await mistral.chat.complete({
+            model: "mistral-large-latest",
             messages: messages,
-            response_format: { type: "json_object" },
+            responseFormat: { type: "json_object" },
         });
 
         const content = response.choices?.[0]?.message?.content;
